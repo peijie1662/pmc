@@ -1,0 +1,243 @@
+<template>
+  <div>
+    <div class="header">
+      <el-input
+        v-model="vscd"
+        size="small"
+        placeholder="请输入船舶代码"
+        style="margin-left:10px;width:200px;"
+        @keyup.native="chgUpper"
+      ></el-input>
+      <el-input
+        v-model="imvsvy"
+        size="small"
+        placeholder="进口航次"
+        style="margin-left:5px;width:100px;"
+        @keyup.native="chgUpper"
+      ></el-input>
+      <el-input
+        v-model="exvsvy"
+        size="small"
+        placeholder="出口航次"
+        style="margin-left:5px;width:100px;"
+        @keyup.native="chgUpper"
+      ></el-input>
+<!--
+      <el-button v-if="myloading" type="primary" size="small" plain icon="el-icon-loading">查询</el-button>
+      <el-button v-else type="primary" size="small" plain @click="loadData">查询</el-button>
+ -->   
+   <TB width="80px" height="30px" caption="查询" :fun="loadData"></TB> 
+    
+    </div>
+    <div class="content">
+      <el-tabs type="border-card">
+        <el-tab-pane label="进口贝图">
+          <imbay ref="imbay" :blist="im.bays"></imbay>
+        </el-tab-pane>
+        <el-tab-pane label="进口MINI图">
+          <immini ref="immini"></immini>
+        </el-tab-pane>
+        <el-tab-pane label="出口贝图">
+          <exbay ref="exbay" :blist="ex.bays"></exbay>
+        </el-tab-pane>
+        <el-tab-pane label="出口MINI图">
+          <exmini ref="exmini"></exmini>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+  </div>
+</template>
+
+<script>
+import ImportBayCom from "./importBayComponent.vue";
+import ExportBayCom from "./exportBayComponent.vue";
+import ImportMiniCom from "./importMiniComponent.vue";
+import ExportMiniCom from "./exportMiniComponent.vue";
+import { getImportBays, getExportBays } from "../api/api";
+import GB from "../global.vue";
+import V from "../VesselUtils.vue";
+import TB from "./timeButtomComponent.vue";
+
+export default {
+  data() {
+    return {
+      vscd: "WH306",
+      imvsvy: "N258",
+      exvsvy: "S260",
+      im: {
+        hatchs: [],
+        bays: []
+      },
+      ex: {
+        hatchs: [],
+        bays: []
+      },
+      myloading: false
+    };
+  },
+  methods: {
+    chgUpper() {
+      this.vscd = this.vscd.toUpperCase();
+    },
+    loadData() {
+      let me = this;
+      if (
+        GB.isEmpty(me.vscd) ||
+        GB.isEmpty(me.imvsvy) ||
+        GB.isEmpty(me.exvsvy)
+      ) {
+        this.$message({
+          message: "请先输入船舶代码和船名航次",
+          type: "error"
+        });
+        return;
+      }
+      let param = {
+        vscd: me.vscd,
+        imvsvy: me.imvsvy,
+        exvsvy: me.exvsvy
+      };
+      //1.载入进口船图
+      me.im.hatchs = [];
+      me.im.bays = [];
+      me.myloading = true;
+      getImportBays(param).then(res => {
+        let { flag, data, errMsg, outMsg } = res;
+        if (flag) {
+          me.im.hatchs = data.hatchs;
+          me.im.liveHatch = data.liveHatch;
+          me.im.qds = data.qds;
+          me.im.cwps = data.cwps;
+          me.im.cwps.forEach(function(qd) {
+            qd.children.forEach(function(cwp) {
+              delete cwp["children"];
+            });
+          });
+          if (GB.isEmpty(me.im.hatchs)) {
+            throw "找不到" + me.vscd + "的船模";
+          }
+          V.setOgNeighborFlag(me.im.hatchs);
+          me.im.hatchs.forEach(function(h) {
+            h.bays.forEach(function(b) {
+              V.initBay(b);
+              me.im.bays.push(b);
+            });
+          });
+          me.myloading = false;
+          me.$refs.immini.rcv(me.im);
+          this.$message({
+            message: "载入进口数据成功",
+            type: "success"
+          });
+        } else {
+          me.myloading = false;
+          this.$message({
+            message: errMsg,
+            type: "error"
+          });
+        }
+      });
+      /** 
+        .catch(err => {
+          this.$message({
+            message: err,
+            type: "error"
+          }); 
+        });
+        */
+      //2.载入出口船图
+      me.ex.hatchs = [];
+      me.ex.bays = [];
+      me.myloading = true;
+      getExportBays(param).then(res => {
+        let { flag, data, errMsg, outMsg } = res;
+        if (flag) {
+          me.ex.hatchs = data.hatchs;
+          me.ex.ports = data.ports;
+          me.ex.qds = data.qds;
+          me.ex.cwps = data.cwps;
+          me.ex.cwps.forEach(function(qd) {
+            qd.children.forEach(function(cwp) {
+              delete cwp["children"];
+            });
+          });
+          me.initQds;
+          if (GB.isEmpty(me.ex.hatchs)) {
+            throw "找不到" + me.vscd + "的船模";
+          }
+          me.ex.hatchs.forEach(function(h) {
+            h.bays.forEach(function(b) {
+              V.initBay(b);
+              me.ex.bays.push(b);
+            });
+          });
+          me.myloading = false;
+          me.$refs.exmini.rcv(me.ex);
+          this.$message({
+            message: "载入出口数据成功",
+            type: "success"
+          });
+        } else {
+          me.myloading = false;
+          this.$message({
+            message: errMsg,
+            type: "error"
+          });
+        }
+      });
+      /*
+        .catch(err => {
+          this.$message({
+            message: err,
+            type: "error"
+          });
+        });
+        */
+      //3.更改父组件标题栏
+      //这种传值方式将子组件与父组件耦合了,导致无法释放,所以不推荐使用
+      //this.$parent.$parent.$parent.chgTitle(param);
+      this.$emit("chgTitle", param);
+    }
+  },
+  components: {
+    imbay: ImportBayCom,
+    exbay: ExportBayCom,
+    immini: ImportMiniCom,
+    exmini: ExportMiniCom,
+    TB
+  },
+  deactivated() {
+    console.log("vessel deactivated");
+  },
+  beforeDestroy() {
+    this.im.hatchs = null;
+    this.im.bays = null;
+    this.ex.hatchs = null;
+    this.ex.bays = null;
+
+    this.$refs.immini = null;
+    this.$refs.exmini = null;
+    this.$refs.imbay = null;
+    this.$refs.exbay = null;
+   
+    //加了这个效果特好，不知道为什么
+    this.$parent.$parent.$parent = null;
+    this.$parent.$parent = null;
+    this.$parent = null;
+    
+    console.log("vessel beforeDestroy");
+  },
+  destroyed() {
+    console.log("vessel destroyed");
+  }
+};
+</script>
+
+<style scoped>
+.header {
+  margin-top: 10px;
+}
+.content {
+  margin-top: 10px;
+}
+</style>
