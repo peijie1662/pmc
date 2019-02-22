@@ -99,6 +99,7 @@ export default {
           }
         });
       }
+      //测试
       this.editableTabsValue2 = activeName;
       this.editableTabs2 = tabs.filter(tab => tab.name !== targetName);
     }
