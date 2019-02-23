@@ -1,13 +1,12 @@
 <template>
   <div>
     <div class="header">
-      <el-input
-        v-model="vscd"
-        size="small"
-        placeholder="请输入船舶代码"
-        style="margin-left:10px;width:200px;"
-        @keyup.native="chgUpper"
-      ></el-input>
+      <el-select v-model="ypIndex" placeholder="请输入船舶代码" @change="vscdChg">
+        <el-option v-for="(yp,index) in yps" :key="index" :label="yp.vscn" :value="index">
+          <span style="float: left">{{ yp.vscd }}</span>
+          <span style="float: right; color: #8492a6; font-size: 13px">{{ yp.vscn }}</span>
+        </el-option>
+      </el-select>
       <el-input
         v-model="imvsvy"
         size="small"
@@ -22,12 +21,11 @@
         style="margin-left:5px;width:100px;"
         @keyup.native="chgUpper"
       ></el-input>
-<!--
+      <!--
       <el-button v-if="myloading" type="primary" size="small" plain icon="el-icon-loading">查询</el-button>
       <el-button v-else type="primary" size="small" plain @click="loadData">查询</el-button>
- -->   
-   <TB width="80px" height="30px" caption="查询" :fun="loadData"></TB> 
-    
+      -->
+      <TB width="80px" height="30px" caption="查询" :fun="loadData"></TB>
     </div>
     <div class="content">
       <el-tabs type="border-card">
@@ -53,7 +51,7 @@ import ImportBayCom from "./importBayComponent.vue";
 import ExportBayCom from "./exportBayComponent.vue";
 import ImportMiniCom from "./importMiniComponent.vue";
 import ExportMiniCom from "./exportMiniComponent.vue";
-import { getImportBays, getExportBays } from "../api/api";
+import { getImportBays, getExportBays, getYP } from "../api/api";
 import GB from "../global.vue";
 import V from "../VesselUtils.vue";
 import TB from "./timeButtomComponent.vue";
@@ -61,9 +59,11 @@ import TB from "./timeButtomComponent.vue";
 export default {
   data() {
     return {
-      vscd: "WH306",
-      imvsvy: "N258",
-      exvsvy: "S260",
+      yps: [], //预排信息
+      ypIndex: "", //
+      vscd: "",
+      imvsvy: "",
+      exvsvy: "",
       im: {
         hatchs: [],
         bays: []
@@ -78,6 +78,12 @@ export default {
   methods: {
     chgUpper() {
       this.vscd = this.vscd.toUpperCase();
+    },
+    vscdChg(index) {
+      let yp = this.yps[index];
+      this.vscd = yp.vscd;
+      this.imvsvy = yp.vsvyim;
+      this.exvsvy = yp.vsvyex;
     },
     loadData() {
       let me = this;
@@ -206,6 +212,21 @@ export default {
     exmini: ExportMiniCom,
     TB
   },
+  mounted() {
+    let me = this;
+    getYP({ date: GB.dateToInt(new Date()) }).then(res => {
+      let { flag, data, errMsg, outMsg } = res;
+      if (flag) {
+        me.yps = data;
+      } else {
+        me.myloading = false;
+        this.$message({
+          message: errMsg,
+          type: "error"
+        });
+      }
+    });
+  },
   deactivated() {
     console.log("vessel deactivated");
   },
@@ -219,12 +240,12 @@ export default {
     this.$refs.exmini = null;
     this.$refs.imbay = null;
     this.$refs.exbay = null;
-   
+
     //加了这个效果特好，不知道为什么
     this.$parent.$parent.$parent = null;
     this.$parent.$parent = null;
     this.$parent = null;
-    
+
     console.log("vessel beforeDestroy");
   },
   destroyed() {
