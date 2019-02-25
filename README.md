@@ -1,6 +1,6 @@
 # pmc
 
-> data transform platform
+> Production Monitoring Center 生产监控中心
 
 ## Build Setup
 
