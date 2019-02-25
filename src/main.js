@@ -6,8 +6,8 @@ import 'element-ui/lib/theme-chalk/index.css'
 import routes from './routes'
 import './assets/iconfont/iconfont.css'
 import './assets/iconfont-crab/iconfont.css';
-import { auth } from "./api/api";
 import VueKonva from 'vue-konva'
+import "./assets/font/font.css";
 
 Vue.use(VueRouter)
 Vue.use(ElementUI)

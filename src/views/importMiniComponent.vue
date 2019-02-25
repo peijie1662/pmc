@@ -171,7 +171,6 @@ export default {
           color: "#FFFFFF"
         }
       ],
-
       width: a4_width,
       height: a4_height,
       stage: null, //舞台
@@ -182,7 +181,6 @@ export default {
       pageType: "A4",
       liveHatch: 0, //生活舱
       hatchs: [], //舱列表
-      bays: [], //贝列表
       qds: [], //桥吊列表
       cwps: [] //CWP列表
     };
@@ -302,7 +300,6 @@ export default {
     },
     rcv(val) {
       this.hatchs = val.hatchs;
-      this.bays = val.bays;
       this.qds = val.qds;
       this.cwps = val.cwps;
       this.liveHatch = val.liveHatch;
@@ -358,16 +355,18 @@ export default {
         return r;
       };
       //1.确定贝参数
-      this.bays.forEach(function(bay) {
-        if (bay.cl > max_cl) {
-          max_cl = bay.cl;
-        }
-        if (bay.dh == "H" && bay.el > max_h_el) {
-          max_h_el = bay.el;
-        }
-        if (bay.dh == "D" && bay.el > max_d_el) {
-          max_d_el = bay.el;
-        }
+      this.hatchs.forEach(function(hatch) {
+        hatch.bays.forEach(function(bay) {
+          if (bay.cl > max_cl) {
+            max_cl = bay.cl;
+          }
+          if (bay.dh == "H" && bay.el > max_h_el) {
+            max_h_el = bay.el;
+          }
+          if (bay.dh == "D" && bay.el > max_d_el) {
+            max_d_el = bay.el;
+          }
+        });
       });
       //2.不断增加side,寻找最大可用side
       let side = 0;
@@ -398,6 +397,8 @@ export default {
         }
       }
       side -= 1;
+      //确定贝标签字体大小
+      let labFontSize = V.getFonSizeByCell(side);
       //3.使用合适的side确定舱位矩形
       hatchw = max_cl * side + 45;
       hatchh = (max_d_el + max_h_el) * side + 60;
@@ -459,7 +460,6 @@ export default {
         if (!GB.isEmpty(hatch.fRect)) {
           //1.1甲板
           let lab = V.getHatchLab(hatch, "F");
-          let fz = V.getFonSizeByCell(side);
           let hatchLab = new Konva.Text({
             x: hatch.fRect.attrs.x + midx - 5,
             y: hatch.fRect.attrs.y + 2,
@@ -561,7 +561,7 @@ export default {
               x: xjx,
               y: xjy - 8,
               text: hatchSummary.f_d20 + "+" + hatchSummary.f_d40,
-              fontSize: 8,
+              fontSize: labFontSize,
               fontFamily: V.MyFontFamily
             });
             layer.add(upTxt);
@@ -569,7 +569,7 @@ export default {
               x: xjx,
               y: xjy + 1,
               text: hatchSummary.f_h20 + "+" + hatchSummary.f_h40,
-              fontSize: 8,
+              fontSize: labFontSize,
               fontFamily: V.MyFontFamily
             });
             layer.add(downTxt);
@@ -578,7 +578,7 @@ export default {
               x: xjx,
               y: xjy - 10,
               text: hatchSummary.pa_d20 + "+" + hatchSummary.pa_d40,
-              fontSize: 8,
+              fontSize: labFontSize,
               fontFamily: V.MyFontFamily
             });
             layer.add(upTxt);
@@ -586,18 +586,18 @@ export default {
               x: xjx,
               y: xjy + 1,
               text: hatchSummary.pa_h20 + "+" + hatchSummary.pa_h40,
-              fontSize: 8,
+              fontSize: labFontSize,
               fontFamily: V.MyFontFamily
             });
             layer.add(downTxt);
           }
           //1.4舱盖板
-          V.drawCover(layer, hatch, "F", midy);
+          //V.drawCover(layer, hatch, "F", midy);
         }
         //2.父后舱
         if (!GB.isEmpty(hatch.paRect)) {
           let lab = V.getHatchLab(hatch, "PA");
-          let fz = V.getFonSizeByCell(side);
+          let fz = V.labFontSize;
           let hatchLab = new Konva.Text({
             x: hatch.paRect.attrs.x + midx - 5,
             y: hatch.paRect.attrs.y + 2,
@@ -773,7 +773,7 @@ export default {
             x: xjx,
             y: xjy - 8,
             text: hatchSummary.pa_d20 + "+" + hatchSummary.pa_d40,
-            fontSize: 8,
+            fontSize: labFontSize,
             fontFamily: V.MyFontFamily
           });
           layer.add(upTxt);
@@ -781,11 +781,12 @@ export default {
             x: xjx,
             y: xjy + 1,
             text: hatchSummary.pa_h20 + "+" + hatchSummary.pa_h40,
-            fontSize: 8,
+            fontSize: labFontSize,
             fontFamily: V.MyFontFamily
           });
           layer.add(downTxt);
           //2.4舱盖板
+          V.drawCover(layer, hatch, "F", midy);
           V.drawCover(layer, hatch, "A", midy);
         }
       });
@@ -834,6 +835,22 @@ export default {
       me = null;
     },
     compeleteDestroy() {
+      this.hatchs.forEach(function(hatch){
+        if(hatch.fRect){
+          hatch.fRect = null;
+        }
+        if(hatch.paRect){
+          hatch.paRect = null;
+        }
+        hatch.bays.forEach(function(bay){
+          bay.cells.forEach(function(cell){
+            if(cell.rect){
+              cell.rect = null;
+            } 
+            cell.group = null;
+          })
+        });
+      });
       if (this.stage != null) {
         let shapes = this.stage.find("Shape");
         shapes.forEach(function(shape) {
@@ -858,7 +875,6 @@ export default {
     this.findingCntr = null;
     this.dialogCntr = null;
     this.hatchs = null;
-    this.bays = null;
     console.log("imMini beforeDestroy");
   },
   destroyed() {

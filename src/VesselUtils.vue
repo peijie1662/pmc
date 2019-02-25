@@ -2,7 +2,8 @@
 import GB from "./global.vue";
 //建立船舶模型的工具类
 
-const MyFontFamily = "长城细圆体";
+//const MyFontFamily = "CCXYT";
+const MyFontFamily = "MS Sans Serif"
 
 //是否高箱
 function isHCntr(ctsz) {
@@ -553,7 +554,6 @@ function drawBayLab(layer, bay, rect, params) {
           y: ylab_y,
           text: bay.ylab[i],
           fontSize: fz,
-          fontStyle: "bold",
           fontFamily: MyFontFamily,
           fill: "black"
         });
@@ -587,7 +587,6 @@ function drawBayLab(layer, bay, rect, params) {
           y: xlab_y,
           text: bay.xlab[i],
           fontSize: fz,
-          fontStyle: "bold",
           fontFamily: MyFontFamily,
           fill: "black"
         });
@@ -713,14 +712,14 @@ function initBay(b) {
     }
     return re;
   };
-  //前后
+  //前后,非标放在F
   b["getFA"] = function() {
     let re = "";
-    if (b.bayType.indexOf("FORWARD") >= 0) {
-      re = "F";
-    } else {
+    if (b.bayType.indexOf("AFTER") >= 0) {
       re = "A";
-    }
+    } else {
+      re = "F";
+    } 
     return re;
   };
   //寻找指定格子
@@ -742,8 +741,9 @@ function coverPoint(clab, per, hatch) {
   if (hbay != null) {
     for (let i = 0; i < hbay.cells.length; i++) {
       if (parseInt(hbay.cells[i].clab) == clab) {
-        let left = hbay.cells[i].rect.attrs.x;
-        let width = hbay.cells[i].rect.attrs.width;
+        let r = hbay.cells[i].group.children[0];
+        let left = r.attrs.x;
+        let width = r.attrs.width;
         re = Math.round(left + (width * per) / 100);
         //减掉外框left
         if (hbay.getFA() == "F") {

@@ -1,5 +1,5 @@
 <script>
-const srvurl = "http://169.169.43.56:8003";
+const srvurl = "http://169.169.40.38:8003";
 
 function isEmpty(obj) {
   if (typeof obj == "undefined" || obj == null || obj == "") {
@@ -48,7 +48,7 @@ function dateToInt(date) {
     (date.getMonth() + 1 < 10
       ? "0" + (date.getMonth() + 1)
       : date.getMonth() + 1) + "";
-  let D = (date.getDate() + "").padStart(2, "0");
+  let D = pad2(date.getDate() + "");
   return parseInt(Y + M + D);
 }
 

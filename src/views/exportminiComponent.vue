@@ -576,7 +576,7 @@ export default {
             layer.add(downTxt);
           }
           //1.4舱盖板
-          V.drawCover(layer, hatch, "F", midy);
+          //V.drawCover(layer, hatch, "F", midy);
         }
         //2.父后舱
         if (!GB.isEmpty(hatch.paRect)) {
@@ -667,7 +667,7 @@ export default {
           if (bay != null) {
             let sideSpan = Math.round((hatchw - bay.cl * side) / 2);
             let fatherBay = V.findBay(hatch, "P", "H");
-            bay.cells.forEach(function(cell) {
+            bay.cells.forEach(function(cell) {             
               //因为是后父贝的叠加视图,将父贝的箱注入到子贝,以便画图
               let pcntr = V.findPartnerCntr(cell, fatherBay);
               if (pcntr != null) {
@@ -770,6 +770,7 @@ export default {
           });
           layer.add(downTxt);
           //2.4舱盖板
+          V.drawCover(layer, hatch, "F", midy);
           V.drawCover(layer, hatch, "A", midy);
         }
       });
@@ -818,6 +819,22 @@ export default {
       me = null;
     },
     compeleteDestroy() {
+      this.hatchs.forEach(function(hatch) {
+        if (hatch.fRect) {
+          hatch.fRect = null;
+        }
+        if (hatch.paRect) {
+          hatch.paRect = null;
+        }
+        hatch.bays.forEach(function(bay) {
+          bay.cells.forEach(function(cell) {
+            if (cell.rect) {
+              cell.rect = null;
+            }
+            cell.group = null;
+          });
+        });
+      });
       if (this.stage != null) {
         let shapes = this.stage.find("Shape");
         shapes.forEach(function(shape) {
@@ -827,7 +844,7 @@ export default {
         this.stage.destroy();
         this.layer = null;
         this.stage = null;
-        console.log("exportMini release");
+        console.log("importMini release");
       }
     }
   },
