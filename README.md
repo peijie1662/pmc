@@ -15,4 +15,9 @@ npm run dev
 npm run build
 ```
 
-For detailed explanation on how things work, consult the [docs for vue-loader](http://vuejs.github.io/vue-loader).
+# 业务简介
+码头船舶作业的生产监控，尽量使用图形化的方式展现作业配载，策划，进度等数据，希望能给操作者提供全景式服务：）
+
+# 技术架构
+
+springboot/vue/konva.js
