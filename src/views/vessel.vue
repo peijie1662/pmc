@@ -1,7 +1,7 @@
 <template>
   <div>
-    <div class="header">
-      <el-select v-model="ypIndex" placeholder="请输入船舶代码" @change="vscdChg">
+    <div>
+      <el-select v-model="ypIndex" placeholder="请输入船舶代码" @change="vscdChg" size="small">
         <el-option v-for="(yp,index) in yps" :key="index" :label="yp.vscn" :value="index">
           <span style="float: left">{{ yp.vscd }}</span>
           <span style="float: right; color: #8492a6; font-size: 13px">{{ yp.vscn }}</span>
@@ -21,13 +21,9 @@
         style="margin-left:5px;width:100px;"
         @keyup.native="chgUpper"
       ></el-input>
-      <!--
-      <el-button v-if="myloading" type="primary" size="small" plain icon="el-icon-loading">查询</el-button>
-      <el-button v-else type="primary" size="small" plain @click="loadData">查询</el-button>
-      -->
       <TB width="80px" height="30px" caption="查询" :fun="loadData"></TB>
     </div>
-    <div class="content">
+    <div style="margin-top:10px;">
       <el-tabs type="border-card">
         <el-tab-pane label="进口贝图">
           <imbay ref="imbay" :blist="im.bays"></imbay>
@@ -255,10 +251,5 @@ export default {
 </script>
 
 <style scoped>
-.header {
-  margin-top: 10px;
-}
-.content {
-  margin-top: 10px;
-}
+
 </style>

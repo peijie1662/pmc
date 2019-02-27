@@ -2,8 +2,8 @@
 import GB from "./global.vue";
 //建立船舶模型的工具类
 
-//const MyFontFamily = "CCXYT";
-const MyFontFamily = "MS Sans Serif"
+const MyFontFamily = "CCXYT";
+//const MyFontFamily = "MS Sans Serif"
 
 //是否高箱
 function isHCntr(ctsz) {

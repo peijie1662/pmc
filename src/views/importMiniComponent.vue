@@ -266,6 +266,10 @@ export default {
           strokeWidth: 1
         });
         layer.add(circle);
+        layer.move({
+          x: -0.5,
+          y: 0.5
+        });
         layer.draw();
         circle.to({
           offset: {
@@ -835,20 +839,20 @@ export default {
       me = null;
     },
     compeleteDestroy() {
-      this.hatchs.forEach(function(hatch){
-        if(hatch.fRect){
+      this.hatchs.forEach(function(hatch) {
+        if (hatch.fRect) {
           hatch.fRect = null;
         }
-        if(hatch.paRect){
+        if (hatch.paRect) {
           hatch.paRect = null;
         }
-        hatch.bays.forEach(function(bay){
-          bay.cells.forEach(function(cell){
-            if(cell.rect){
+        hatch.bays.forEach(function(bay) {
+          bay.cells.forEach(function(cell) {
+            if (cell.rect) {
               cell.rect = null;
-            } 
+            }
             cell.group = null;
-          })
+          });
         });
       });
       if (this.stage != null) {
