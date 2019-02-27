@@ -1,6 +1,6 @@
 # pmc
 
-> data transform platform
+> Production Monitoring Center 生产监控中心
 
 ## Build Setup
 
@@ -15,4 +15,11 @@ npm run dev
 npm run build
 ```
 
-For detailed explanation on how things work, consult the [docs for vue-loader](http://vuejs.github.io/vue-loader).
+# 业务简介
+码头船舶作业的生产监控，尽量使用图形化的方式展现作业配载，策划，进度等数据，希望能给操作者提供全景式服务：）
+
+# 技术架构
+Springboot/Vue/Konva.js
+
+# 进度
+`2019-2-25:` 把以前代码整理了一下上传，这周先收集用户意见，再继续修改或上其它功能。
