@@ -28,8 +28,10 @@ function findBay(hatch, fa, dh) {
       fa = "FORWARD";
     } else if (fa == "A") {
       fa = "AFTER";
-    } else {
+    } else if (fa == "P") {
       fa = "PARENT";
+    } else {
+      fa = "?";
     }
     hatch.bays.forEach(function(bay) {
       if (bay.dh == dh && bay.bayType.indexOf(fa) >= 0) {
@@ -38,7 +40,9 @@ function findBay(hatch, fa, dh) {
     });
   } else {
     hatch.bays.forEach(function(bay) {
-      if (bay.dh == dh) {
+      if (fa == "P" && bay.bayType.indexOf("CHILD") >= 0) {
+        re = null;
+      } else if (bay.dh == dh) {
         re = bay;
       }
     });
@@ -68,13 +72,13 @@ function getFonSizeByCell(side) {
     result = 6;
   }
   if (side >= 9) {
-    result = 6;
+    result = 7;
   }
   if (side >= 11) {
-    result = 6;
+    result = 8;
   }
   if (side >= 13) {
-    result = 7;
+    result = 10;
   }
   return result;
 }
@@ -548,7 +552,11 @@ function drawBayLab(layer, bay, rect, params) {
   for (let i = 0; i <= bay.ylab.length - 1; i++) {
     for (let m = 0; m <= bay.cells.length - 1; m++) {
       if (bay.cells[m].elab == bay.ylab[i]) {
-        ylab_y = bay.cells[m].rect.attrs.y;
+        ylab_y = bay.cells[m].rect.attrs.y + side / 2 - fz / 2;
+        //纵标签不能超左边框
+        if (ylab_x < rect.attrs.x + 3) {
+          ylab_x = rect.attrs.x + 3;
+        }
         let lab = new Konva.Text({
           x: ylab_x,
           y: ylab_y,
@@ -570,6 +578,10 @@ function drawBayLab(layer, bay, rect, params) {
     xlab_y = top + midy - max_d_el * side - side - 5 - 2;
     if (xlab_y < top + 10) {
       xlab_y = top + 10;
+    }
+    //上标签不能超贝标签
+    if (xlab_y < rect.attrs.y + 13) {
+      xlab_y = rect.attrs.y + 13;
     }
   } else {
     xlab_y = top + midy + max_h_el * side + side + 5;
@@ -610,24 +622,25 @@ function countHatchCntr(hatch) {
   hatch.bays.forEach(function(bay) {
     bay.cells.forEach(function(cell) {
       if (cell.cntr != null) {
-        if (bay.getFA() == "F") {
+        if (bay.getFA() == "F" && bay.getPC() == "C") {
           if (bay.dh == "D") {
             f_d20 += 1;
           } else {
             f_h20 += 1;
           }
         } else {
-          if (bay.dh == "D" && bay.getPC() == "C") {
-            pa_d20 += 1;
-          }
-          if (bay.dh == "D" && bay.getPC() == "P") {
-            pa_d40 += 1;
-          }
-          if (bay.dh == "H" && bay.getPC() == "C") {
-            pa_h20 += 1;
-          }
-          if (bay.dh == "H" && bay.getPC() == "P") {
-            pa_h40 += 1;
+          if (bay.getPC() == "C") {
+            if (bay.dh == "D") {
+              pa_d20 += 1;
+            } else {
+              pa_h20 += 1;
+            }
+          } else {
+            if (bay.dh == "D") {
+              pa_d40 += 1;
+            } else {
+              pa_h40 += 1;
+            }
           }
         }
       }
@@ -643,6 +656,61 @@ function countHatchCntr(hatch) {
     pa_h20: pa_h20,
     pa_h40: pa_h40
   };
+}
+
+//绘制小计
+function drawHatchSummary(layer, hatch, params) {
+  let hatchw = params.hatchw;
+  let max_cl = params.max_cl;
+  let side = params.side;
+  let midy = params.midy;
+  let hatchSummary = params.hatchSummary;
+  //
+  let r = "";
+  let d20 = 0;
+  let d40 = 0;
+  let h20 = 0;
+  let h40 = 0;
+  if (params.fa == "F") {
+    r = hatch.fRect;
+    d20 = hatchSummary.f_d20;
+    d40 = hatchSummary.f_d40;
+    h20 = hatchSummary.f_h20;
+    h40 = hatchSummary.f_h40;
+  } else {
+    r = hatch.paRect;
+    d20 = hatchSummary.pa_d20;
+    d40 = hatchSummary.pa_d40;
+    h20 = hatchSummary.pa_h20;
+    h40 = hatchSummary.pa_h40;
+  }
+  //
+  let labFontSize = 7;
+  let maxSpan = Math.round((hatchw - max_cl * side) / 2);
+  let xjx = r.attrs.x + r.attrs.width - maxSpan + 5 + 1;
+  let xjy = r.attrs.y + midy;
+  let line = new Konva.Line({
+    points: [xjx, xjy, xjx + 15, xjy],
+    stroke: "black",
+    strokeWidth: 1
+  });
+  layer.add(line);
+  let upTxt = new Konva.Text({
+    x: xjx,
+    y: xjy - 8,
+    text: d20 + "+" + d40,
+    fontSize: labFontSize,
+    fontFamily: MyFontFamily
+  });
+  layer.add(upTxt);
+  let downTxt = new Konva.Text({
+    x: xjx,
+    y: xjy + 1,
+    text: h20 + "+" + h40,
+    fontSize: labFontSize,
+    fontFamily: MyFontFamily
+  });
+  layer.add(downTxt);
 }
 
 //定义超限箱
@@ -719,7 +787,7 @@ function initBay(b) {
       re = "A";
     } else {
       re = "F";
-    } 
+    }
     return re;
   };
   //寻找指定格子
@@ -872,6 +940,7 @@ export default {
   countHatchCntr, //舱位小计
   setOgNeighborFlag, //设置相邻格子超限标记
   drawCover, //绘制舱盖板
+  drawHatchSummary, //绘制舱位小计
   //
   setImportCntrColor, //进口箱颜色设置
   setExportCntrColor //出口箱颜色设置

@@ -33,44 +33,8 @@
       </div>
     </div>
     <div ref="importMini" style="margin-top:10px;border:1px solid #20a0ff;"></div>
-    <el-dialog title="单箱信息" :visible.sync="dialogVisible" width="300px">
-      <div>
-        <h3>
-          <span class="dialogtitle">箱号:</span>
-          <span>{{dialogCntr.cntrid}}</span>
-        </h3>
-        <h3>
-          <span class="dialogtitle">箱型:</span>
-          <span>{{dialogCntr.ctty}}</span>
-          <span class="dialogtitle">尺寸:</span>
-          <span>{{dialogCntr.ctsz}}</span>
-        </h3>
-        <h3>
-          <span class="dialogtitle">装货港:</span>
-          <span>{{dialogCntr.port}}</span>
-          <span class="dialogtitle">箱主:</span>
-          <span>{{dialogCntr.lncd}}</span>
-        </h3>
-        <h3>
-          <span class="dialogtitle">空重:</span>
-          <span>{{dialogCntr.infe}}</span>
-          <span class="dialogtitle">箱重:</span>
-          <span>{{dialogCntr.ctgw}}</span>
-        </h3>
-        <h3>
-          <span class="dialogtitle">列:</span>
-          <span>{{dialogCntr.clab}}</span>
-          <span class="dialogtitle">层:</span>
-          <span>{{dialogCntr.elab}}</span>
-        </h3>
-        <h3>
-          <span class="dialogtitle">桥吊:</span>
-          <span>{{dialogCntr.qd}}</span>
-          <span class="dialogtitle">CWP:</span>
-          <span>{{dialogCntr.cwp}}</span>
-        </h3>
-      </div>
-    </el-dialog>
+    <!-- 单箱信息 -->
+    <cntr-info :cntr="dialogCntr"></cntr-info>
     <!-- 颜色编辑框 -->
     <div class="cwpFloatBar" v-if="isSubWindowShow">
       <div v-for="data in subWindowData" :key="data.label" class="cwpFloatBarCell">
@@ -130,6 +94,7 @@
 <script>
 import GB from "../global.vue";
 import V from "../VesselUtils.vue";
+import CntrInfo from "./cntrInfoComponent.vue";
 
 const a4_width = 1200;
 const a4_height = 900;
@@ -176,7 +141,6 @@ export default {
       stage: null, //舞台
       layer: null,
       findingCntr: "",
-      dialogVisible: false,
       dialogCntr: "", //提示框显示的箱子
       pageType: "A4",
       liveHatch: 0, //生活舱
@@ -287,8 +251,10 @@ export default {
       }
     },
     showDialog(cntr) {
-      this.dialogVisible = true;
-      this.dialogCntr = cntr;
+      this.dialogCntr = "";
+      this.$nextTick(function() {
+        this.dialogCntr = cntr;
+      });
     },
     pageSizeChange() {
       let me = this;
@@ -550,53 +516,14 @@ export default {
             });
           }
           //1.3 小计
-          let maxSpan = Math.round((hatchw - max_cl * side) / 2);
-          let xjx =
-            hatch.fRect.attrs.x + hatch.fRect.attrs.width - maxSpan + 5 + 1;
-          let xjy = hatch.fRect.attrs.y + midy;
-          let line = new Konva.Line({
-            points: [xjx, xjy, xjx + 15, xjy],
-            stroke: "black",
-            strokeWidth: 1
+          V.drawHatchSummary(layer, hatch, {
+            side,
+            midy,
+            hatchw,
+            max_cl,
+            hatchSummary,
+            fa:"F"
           });
-          layer.add(line);
-          if (hatch.type == "S") {
-            let upTxt = new Konva.Text({
-              x: xjx,
-              y: xjy - 8,
-              text: hatchSummary.f_d20 + "+" + hatchSummary.f_d40,
-              fontSize: labFontSize,
-              fontFamily: V.MyFontFamily
-            });
-            layer.add(upTxt);
-            let downTxt = new Konva.Text({
-              x: xjx,
-              y: xjy + 1,
-              text: hatchSummary.f_h20 + "+" + hatchSummary.f_h40,
-              fontSize: labFontSize,
-              fontFamily: V.MyFontFamily
-            });
-            layer.add(downTxt);
-          } else {
-            let upTxt = new Konva.Text({
-              x: xjx,
-              y: xjy - 10,
-              text: hatchSummary.pa_d20 + "+" + hatchSummary.pa_d40,
-              fontSize: labFontSize,
-              fontFamily: V.MyFontFamily
-            });
-            layer.add(upTxt);
-            let downTxt = new Konva.Text({
-              x: xjx,
-              y: xjy + 1,
-              text: hatchSummary.pa_h20 + "+" + hatchSummary.pa_h40,
-              fontSize: labFontSize,
-              fontFamily: V.MyFontFamily
-            });
-            layer.add(downTxt);
-          }
-          //1.4舱盖板
-          //V.drawCover(layer, hatch, "F", midy);
         }
         //2.父后舱
         if (!GB.isEmpty(hatch.paRect)) {
@@ -763,32 +690,14 @@ export default {
             }
           }
           //2.3小计
-          let maxSpan = Math.round((hatchw - max_cl * side) / 2);
-          let xjx =
-            hatch.paRect.attrs.x + hatch.paRect.attrs.width - maxSpan + 5 + 1;
-          let xjy = hatch.paRect.attrs.y + midy;
-          let line = new Konva.Line({
-            points: [xjx, xjy, xjx + 15, xjy],
-            stroke: "black",
-            strokeWidth: 1
+          V.drawHatchSummary(layer, hatch, {
+            side,
+            midy,
+            hatchw,
+            max_cl,
+            hatchSummary,
+            fa:"A"
           });
-          layer.add(line);
-          let upTxt = new Konva.Text({
-            x: xjx,
-            y: xjy - 8,
-            text: hatchSummary.pa_d20 + "+" + hatchSummary.pa_d40,
-            fontSize: labFontSize,
-            fontFamily: V.MyFontFamily
-          });
-          layer.add(upTxt);
-          let downTxt = new Konva.Text({
-            x: xjx,
-            y: xjy + 1,
-            text: hatchSummary.pa_h20 + "+" + hatchSummary.pa_h40,
-            fontSize: labFontSize,
-            fontFamily: V.MyFontFamily
-          });
-          layer.add(downTxt);
           //2.4舱盖板
           V.drawCover(layer, hatch, "F", midy);
           V.drawCover(layer, hatch, "A", midy);
@@ -867,6 +776,9 @@ export default {
         console.log("importMini release");
       }
     }
+  },
+  components: {
+    CntrInfo
   },
   mounted() {
     console.log("imMini mounted");
