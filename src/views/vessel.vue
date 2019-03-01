@@ -117,14 +117,14 @@ export default {
           });
           if (GB.isEmpty(me.im.hatchs)) {
             throw "找不到" + me.vscd + "的船模";
-          }
-          V.setOgNeighborFlag(me.im.hatchs);
+          } 
           me.im.hatchs.forEach(function(h) {
             h.bays.forEach(function(b) {
               V.initBay(b);
               me.im.bays.push(b);
             });
           });
+          V.setOgNeighborFlag(me.im.hatchs);
           me.myloading = false;
           me.$refs.immini.rcv(me.im);
           this.$message({
@@ -173,6 +173,7 @@ export default {
               me.ex.bays.push(b);
             });
           });
+          V.setOgNeighborFlag(me.im.hatchs);
           me.myloading = false;
           me.$refs.exmini.rcv(me.ex);
           this.$message({

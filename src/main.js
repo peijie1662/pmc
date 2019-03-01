@@ -8,10 +8,12 @@ import './assets/iconfont/iconfont.css'
 import './assets/iconfont-crab/iconfont.css';
 import VueKonva from 'vue-konva'
 import "./assets/font/font.css";
+import VCharts from 'v-charts'
 
 Vue.use(VueRouter)
 Vue.use(ElementUI)
 Vue.use(VueKonva)
+Vue.use(VCharts)
 
 const router = new VueRouter({
   //mode: "history",

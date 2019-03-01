@@ -725,7 +725,7 @@ function initBay(b) {
   //寻找指定格子
   b["getCell"] = function(cl, el) {
     let re = null;
-    bay.cells.forEach(function(cell) {
+    b.cells.forEach(function(cell) {
       if (cell.cl == cl && cell.el == el) {
         let re = cell;
       }
