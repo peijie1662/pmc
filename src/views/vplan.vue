@@ -186,9 +186,9 @@ export default {
     },
     loadData() {
       let me = this;
-      me.init();
       let d = GB.dateToInt(me.predate) + "";
-      V.Constant.setPageDate(d);
+      V.Constant.setPageDate(d);      
+      me.init();
       getYP({ date: d }).then(res => {
         let { flag, data, errMsg, outMsg } = res;
         if (flag) {
@@ -223,6 +223,8 @@ export default {
     },
     disBackground() {
       let me = this;
+      let d = GB.dateToInt(me.predate) + "";
+      V.Constant.setPageDate(d);       
       me.init();
       me.layer.scale({ x: me.scaleVal / 100, y: me.scaleVal / 100 });
       me.layer.draw();
