@@ -212,7 +212,6 @@ export default {
         let { flag, data, errMsg, outMsg } = res;
         if (flag) {
           me.ybs = data;
-          console.log(me.ybs)
         } else {
           me.$message({
             message: errMsg,
@@ -241,4 +240,3 @@ export default {
   }
 };
 </script>
-

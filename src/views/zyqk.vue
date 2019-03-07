@@ -8,32 +8,32 @@
         </el-option>
       </el-select>
       <el-input
-        v-model="newWatchArea.imvsvy"
+        v-model="newWatchRange.imvsvy"
         size="small"
         placeholder="进口航次"
         style="margin-left:3px;width:100px;"
         @keyup.native="chgUpper"
       ></el-input>
       <el-input
-        v-model="newWatchArea.exvsvy"
+        v-model="newWatchRange.exvsvy"
         size="small"
         placeholder="出口航次"
         style="margin-left:3px;width:100px;"
         @keyup.native="chgUpper"
       ></el-input>
       <el-input-number
-        v-model="newWatchArea.bgBay"
+        v-model="newWatchRange.bgBay"
         controls-position="right"
         :min="1"
-        :max="newWatchArea.maxBay"
+        :max="newWatchRange.maxBay"
         size="small"
         style="width:100px;"
       ></el-input-number>
       <el-input-number
-        v-model="newWatchArea.edBay"
+        v-model="newWatchRange.edBay"
         controls-position="right"
         :min="1"
-        :max="newWatchArea.maxBay"
+        :max="newWatchRange.maxBay"
         size="small"
         style="width:100px;"
       ></el-input-number>
@@ -42,8 +42,17 @@
         plain
         size="small"
         style="margin-left:10px;"
-        @click="addWatchArea"
+        @click="addWatchRange"
       >添加</el-button>
+
+      <el-switch
+        v-model="disSwitch"
+        active-text="图表显示"
+        inactive-text="文字显示"
+        style="margin-left:10px;"
+      ></el-switch>
+
+      <el-button type="primary" plain size="small" style="margin-left:10px;" @click="loadData">test</el-button>
     </div>
     <div class="content">
       <el-collapse v-model="activeNames">
@@ -54,11 +63,13 @@
           :name="index"
         >
           <div class="voyage">
-            <WatchArea
-              v-for="(wa,index) in voyage.watchAreas"
+            <WatchRange
+              v-for="(wr,index) in voyage.watchRanges"
               :key="index"
-              style="display:inline-block;margin-left:5px;"
-            ></WatchArea>
+              style="display:inline-block;margin-left:15px;"
+              :watchRange="wr"
+              :disSwitch="disSwitch"
+            ></WatchRange>
           </div>
         </el-collapse-item>
       </el-collapse>
@@ -67,45 +78,82 @@
 </template>
 
 <script>
-import WatchArea from "./zyqkComponent.vue";
+import WatchRange from "./zyqkComponent.vue";
 import GB from "../global.vue";
-import { getYP } from "../api/api";
+import { getYP, getZyqk } from "../api/api";
 
 export default {
   data() {
     return {
+      disSwitch: false, //图表or文字显示
       activeNames: ["1"],
       yps: [], //预排信息
       ypIndex: "", //
-      newWatchArea: {
+      newWatchRange: {
         vscd: "",
         imvsvy: "",
         exvsvy: "",
         bgBay: 0,
         edBay: 0
       },
-      //watchVoyages -> {vscd:"",imvsvy:"",exvsvy:"",maxBay: 10,voy:"",watchAreas:[]}
-      //watchAreas -> {vscd:"",imvsvy:"",exvsvy:"",voy:"",bgBay:0,edBay:0}
+      //watchVoyage -> {vscd:"",imvsvy:"",exvsvy:"",voy:"",watchRanges:[]}
+      //watchRange -> {bgBay:0,edBay:0,watchAreas:[]} //块区域
+      //watchArea -> {}
       watchVoyages: [] //监控航次列表
     };
   },
   methods: {
+    //刷新现有区块数据,没有区块加减
+    loadData() {
+      let me = this;
+      me.watchVoyages.forEach(function(voy) {
+        //航次的选择区间
+        let baySels = [];
+        voy.watchRanges.forEach(function(wr) {
+          baySels.push({
+            bgBay: wr.bgBay,
+            edBay: wr.edBay
+          });
+        });
+        getZyqk({
+          vscd: voy.vscd,
+          imvsvy: voy.imvsvy,
+          exvsvy: voy.exvsvy,
+          baySels
+        }).then(res => {
+          let { flag, data, errMsg, outMsg } = res;
+          if (flag) {
+            voy.watchRanges = data;
+            console.log(voy.voy);
+            voy.watchRanges.forEach(function(wr) {
+              console.log(wr.bgBay + "-" + wr.edBay);
+            });
+          } else {
+            me.myloading = false;
+            this.$message({
+              message: errMsg,
+              type: "error"
+            });
+          }
+        });
+      });
+    },
     chgUpper() {
       this.vscd = this.vscd.toUpperCase();
     },
     vscdChg(index) {
       let yp = this.yps[index];
-      this.newWatchArea.vscd = yp.vscd;
-      this.newWatchArea.imvsvy = yp.vsvyim;
-      this.newWatchArea.exvsvy = yp.vsvyex;
-      this.newWatchArea.maxBay = 100;
+      this.newWatchRange.vscd = yp.vscd;
+      this.newWatchRange.imvsvy = yp.vsvyim;
+      this.newWatchRange.exvsvy = yp.vsvyex;
+      this.newWatchRange.maxBay = 100;
     },
-    addWatchArea() {
+    addWatchRange() {
       let me = this;
       if (
-        GB.isEmpty(me.newWatchArea.vscd) ||
-        GB.isEmpty(me.newWatchArea.imvsvy) ||
-        GB.isEmpty(me.newWatchArea.exvsvy)
+        GB.isEmpty(me.newWatchRange.vscd) ||
+        GB.isEmpty(me.newWatchRange.imvsvy) ||
+        GB.isEmpty(me.newWatchRange.exvsvy)
       ) {
         this.$message({
           message: "请先输入船舶代码和船名航次",
@@ -114,32 +162,41 @@ export default {
         return;
       }
       let newVoy =
-        me.newWatchArea.vscd +
+        me.newWatchRange.vscd +
         " - " +
-        me.newWatchArea.imvsvy +
+        me.newWatchRange.imvsvy +
         " / " +
-        me.newWatchArea.exvsvy;
+        me.newWatchRange.exvsvy;
       let isFound = false;
+      //如果有该航次,添加监视区
       me.watchVoyages.forEach(function(voyage) {
         if (newVoy == voyage.voy) {
-          voyage.watchAreas.push(me.newWatchArea);
+          voyage.watchRanges.push({
+            bgBay: me.newWatchRange.bgBay,
+            edBay: me.newWatchRange.edBay
+          });
           isFound = true;
         }
       });
+      //如果没有该航次,创建航次,并添加监视区
       if (!isFound) {
         me.watchVoyages.push({
-          vscd: me.newWatchArea.vscd,
-          imvsvy: me.newWatchArea.imvsvy,
-          exvsvy: me.newWatchArea.exvsvy,
+          vscd: me.newWatchRange.vscd,
+          imvsvy: me.newWatchRange.imvsvy,
+          exvsvy: me.newWatchRange.exvsvy,
           voy: newVoy,
-          maxBay: 100,
-          watchAreas: [me.newWatchArea]
+          watchRanges: [
+            {
+              bgBay: me.newWatchRange.bgBay,
+              edBay: me.newWatchRange.edBay
+            }
+          ]
         });
       }
     }
   },
   components: {
-    WatchArea
+    WatchRange
   },
   mounted() {
     let me = this;
