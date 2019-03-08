@@ -1,8 +1,22 @@
 <template>
   <div>
     <div class="workarea">
+      <!-- 表格显示 -->
       <div v-if="!disSwitch">
-        <div style="height:150px;overflow:auto;">
+        <!-- 标题栏 -->
+        <div style="height:25px;background:#20a0ff;position:relative;">
+          <span style="color:white;margin-left:10px;">{{bgBay}} - {{edBay}}</span>
+          <span style="color:white;margin-left:10px;">{{msg}}</span>
+          <div style="float:right;margin-right:10px;">
+            <i
+              class="iconfont icon-delete icon"
+              @click="delWatchRange"
+              id="delBtn"
+            ></i>
+          </div>
+        </div>
+        <!-- 表内容 -->
+        <div style="margin-top:5px;height:160px;overflow:auto;">
           <table>
             <thead>
               <tr>
@@ -28,6 +42,7 @@
             </tbody>
           </table>
         </div>
+        <!-- 统计栏 -->
         <div style="margin-top:10px;">
           <table>
             <thead>
@@ -64,6 +79,7 @@
           </table>
         </div>
       </div>
+      <!-- 图形显示 -->
       <div v-if="disSwitch">
         <ve-histogram :data="chartData" height="200px"></ve-histogram>
       </div>
@@ -74,6 +90,9 @@
 export default {
   data() {
     return {
+      msg: "",
+      bgBay: "",
+      edBay: "",
       c2: "",
       c4: "",
       watchAreas: [],
@@ -90,10 +109,17 @@ export default {
       }
     };
   },
+  methods: {
+    delWatchRange() {
+      this.$emit("delWatchRange"); 
+    }
+  },
   props: ["watchRange", "disSwitch"],
   watch: {
     watchRange(val) {
-      console.log(val);
+      this.msg = val.msg;
+      this.bgBay = val.bgBay;
+      this.edBay = val.edBay;
       this.c2 = {
         size: "20",
         jx: val.jx2,
@@ -118,6 +144,9 @@ export default {
 };
 </script>
 <style scoped>
+#delBtn:hover {
+  color: red;
+}
 table {
   border-collapse: collapse;
 }
@@ -131,10 +160,11 @@ td {
   text-align: center;
 }
 .workarea {
-  width: 218px;
-  height: 210px;
+  width: 220px;
+  height: 250px;
   border: 1px #20a0ff solid;
-  background: white
+  background: white;
+  padding: 5px;
 }
 </style>
 
