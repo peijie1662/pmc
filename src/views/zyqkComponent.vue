@@ -1,20 +1,16 @@
 <template>
   <div>
     <div class="workarea">
+      <!-- 标题栏 -->
+      <div style="height:25px;background:#20a0ff;position:relative;">
+        <span style="color:white;margin-left:10px;">{{bgBay}} - {{edBay}}</span>
+        <span style="color:white;margin-left:10px;">{{msg}}</span>
+        <div style="float:right;margin-right:10px;">
+          <i class="iconfont icon-delete icon" @click="delWatchRange" id="delBtn"></i>
+        </div>
+      </div>
       <!-- 表格显示 -->
       <div v-if="!disSwitch">
-        <!-- 标题栏 -->
-        <div style="height:25px;background:#20a0ff;position:relative;">
-          <span style="color:white;margin-left:10px;">{{bgBay}} - {{edBay}}</span>
-          <span style="color:white;margin-left:10px;">{{msg}}</span>
-          <div style="float:right;margin-right:10px;">
-            <i
-              class="iconfont icon-delete icon"
-              @click="delWatchRange"
-              id="delBtn"
-            ></i>
-          </div>
-        </div>
         <!-- 表内容 -->
         <div style="margin-top:5px;height:160px;overflow:auto;">
           <table>
@@ -81,7 +77,7 @@
       </div>
       <!-- 图形显示 -->
       <div v-if="disSwitch">
-        <ve-histogram :data="chartData" height="200px"></ve-histogram>
+        <ve-histogram :data="chartData" :settings="chartSettings" height="250px"></ve-histogram>
       </div>
     </div>
   </div>
@@ -96,22 +92,18 @@ export default {
       c2: "",
       c4: "",
       watchAreas: [],
+      chartSettings: {
+        stack: { 装: ["实际装船", "装船差额"], 卸: ["实际卸船", "卸船差额"] }
+      },
       chartData: {
-        columns: ["日期", "访问用户", "下单用户", "下单率"],
-        rows: [
-          { 日期: "1/1", 访问用户: 1393, 下单用户: 1093, 下单率: 0.32 },
-          { 日期: "1/2", 访问用户: 3530, 下单用户: 3230, 下单率: 0.26 },
-          { 日期: "1/3", 访问用户: 2923, 下单用户: 2623, 下单率: 0.76 },
-          { 日期: "1/4", 访问用户: 1723, 下单用户: 1423, 下单率: 0.49 },
-          { 日期: "1/5", 访问用户: 3792, 下单用户: 3492, 下单率: 0.323 },
-          { 日期: "1/6", 访问用户: 4593, 下单用户: 4293, 下单率: 0.78 }
-        ]
+        columns: ["贝", "实际装船", "装船差额", "实际卸船", "卸船差额"],
+        rows: [] //{"贝":0,"计划装船":0, "实际装船":0, "计划卸船":0,"实际卸船";0}
       }
     };
   },
   methods: {
     delWatchRange() {
-      this.$emit("delWatchRange"); 
+      this.$emit("delWatchRange");
     }
   },
   props: ["watchRange", "disSwitch"],
@@ -139,6 +131,16 @@ export default {
         zce: val.zce4
       };
       this.watchAreas = val.watchAreas;
+      //图表数据
+      this.chartData.rows = this.watchAreas.map(function(wa) {
+        return {
+          贝: wa.bay,
+          实际装船: wa.sz,
+          装船差额: wa.zce,
+          实际卸船: wa.sx,
+          卸船差额: wa.xce
+        };
+      });
     }
   }
 };
