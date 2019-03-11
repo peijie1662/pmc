@@ -57,19 +57,19 @@
                 <td>{{c2.size}}</td>
                 <td>{{c2.jx}}</td>
                 <td>{{c2.sx}}</td>
-                <td>{{c2.xce}}</td>
+                <td :style="showCe(c2.xce)">{{c2.xce}}</td>
                 <td>{{c2.jz}}</td>
                 <td>{{c2.sz}}</td>
-                <td>{{c2.zce}}</td>
+                <td :style="showCe(c2.zce)">{{c2.zce}}</td>
               </tr>
               <tr>
                 <td>{{c4.size}}</td>
                 <td>{{c4.jx}}</td>
                 <td>{{c4.sx}}</td>
-                <td>{{c4.xce}}</td>
+                <td :style="showCe(c4.xce)">{{c4.xce}}</td>
                 <td>{{c4.jz}}</td>
                 <td>{{c4.sz}}</td>
-                <td>{{c4.zce}}</td>
+                <td :style="showCe(c4.zce)">{{c4.zce}}</td>
               </tr>
             </tbody>
           </table>
@@ -104,6 +104,14 @@ export default {
   methods: {
     delWatchRange() {
       this.$emit("delWatchRange");
+    },
+    //显示差额
+    showCe(val) {
+      if (val == 0) {
+        return { color: "#20a0ff" };
+      } else {
+        return { color: "red" };
+      }
     }
   },
   props: ["watchRange", "disSwitch"],

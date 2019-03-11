@@ -9,19 +9,28 @@ function isEmpty(obj) {
   }
 }
 
-function trim(val){
-　　return val.replace(/(^\s*)|(\s*$)/g, "");
+function trim(val) {
+  return val.replace(/(^\s*)|(\s*$)/g, "");
+}
+
+function formatWidth(str, width) {
+  str += "";
+  if (str.length < width) {
+    return formatWidth(" " + str, width);
+  } else {
+    return str;
+  }
 }
 
 // 数字转字符前补0
 function pad(num, n) {
-	num = String(num);
-	var len = String(num).length;
-	while (len < n) {
-		num = "0" + num;
-		len++;
-	}
-	return num;
+  num = String(num);
+  var len = String(num).length;
+  while (len < n) {
+    num = "0" + num;
+    len++;
+  }
+  return num;
 }
 
 function pad2(str) {
@@ -73,56 +82,56 @@ function intToDate(dint) {
 
 //日期加减
 function addDate(date, days) {
-	var d = new Date(date);
-	d.setDate(d.getDate() + days);
-	var m = d.getMonth() + 1;
-	return d.getFullYear() + '-' + m + '-' + d.getDate();
+  var d = new Date(date);
+  d.setDate(d.getDate() + days);
+  var m = d.getMonth() + 1;
+  return d.getFullYear() + "-" + m + "-" + d.getDate();
 }
 
-// 小时加减 
+// 小时加减
 function addHour(date, hours) {
-	var d = new Date(date);
-	d.setHours(d.getHours() + hours);
-	var m = d.getMonth() + 1;
-	return m + '/' + d.getDate() + " " + d.getHours() + ":" + d.getMinutes();
+  var d = new Date(date);
+  d.setHours(d.getHours() + hours);
+  var m = d.getMonth() + 1;
+  return m + "/" + d.getDate() + " " + d.getHours() + ":" + d.getMinutes();
 }
 
 // 将2个数字转为字符串20170101,0800 -> 20170101080000
 function dateToStr(date, time) {
-	var timeStr = pad(time, 4) + '00';
-	return String(date) + timeStr;
+  var timeStr = pad(time, 4) + "00";
+  return String(date) + timeStr;
 }
 
 // 将2个数字转为字符串 20170101,0800 -> date
 function convertNumToDate(date, time) {
-	var pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
-	var str = dateToStr(date, time);
-	return str.replace(pattern, '$1/$2/$3 $4:$5:$6');
+  var pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
+  var str = dateToStr(date, time);
+  return str.replace(pattern, "$1/$2/$3 $4:$5:$6");
 }
 
 // 求时间差(分钟)
 function vesselMin(bgDate, bgTime, edDate, edTime) {
-	var pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
-	var bgStr = dateToStr(bgDate, bgTime);
-	var bd = bgStr.replace(pattern, '$1/$2/$3 $4:$5:$6');
-	bd = new Date(bd);
-	var edStr = dateToStr(edDate, edTime);
-	var ed = edStr.replace(pattern, '$1/$2/$3 $4:$5:$6');
-	ed = new Date(ed);
-	return (ed - bd) / 1000 / 60;
+  var pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
+  var bgStr = dateToStr(bgDate, bgTime);
+  var bd = bgStr.replace(pattern, "$1/$2/$3 $4:$5:$6");
+  bd = new Date(bd);
+  var edStr = dateToStr(edDate, edTime);
+  var ed = edStr.replace(pattern, "$1/$2/$3 $4:$5:$6");
+  ed = new Date(ed);
+  return (ed - bd) / 1000 / 60;
 }
 
 // 将数字表示日期时间转为字符串 1月1日 12:12
 function convertDHM(date, time) {
-	var pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
-	var str = dateToStr(date, time);
-	return str.replace(pattern, '$2/$3 $4:$5');
+  var pattern = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/;
+  var str = dateToStr(date, time);
+  return str.replace(pattern, "$2/$3 $4:$5");
 }
 
 // "2017-01-01"->"20170101"
 function getCompackDateStr(str) {
-	var pattern = /(\d{4})-(\d{2})-(\d{2})/;
-	return str.replace(pattern, '$1$2$3');
+  var pattern = /(\d{4})-(\d{2})-(\d{2})/;
+  return str.replace(pattern, "$1$2$3");
 }
 
 function formatDate(date, fmt) {
@@ -151,12 +160,14 @@ function formatDate(date, fmt) {
 
 export default {
   srvurl,
+  //字符串函数
   trim,
   isEmpty,
+  formatWidth,
   pad,
   pad2,
   ipad2,
-  downloadURI,
+  //时间函数
   addHour,
   addDate,
   dateToStr,
@@ -166,6 +177,8 @@ export default {
   getCompackDateStr,
   dateToInt,
   intToDate,
-  formatDate
+  formatDate,
+  //其它函数
+  downloadURI,
 };
 </script>

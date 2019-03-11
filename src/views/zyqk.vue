@@ -28,7 +28,6 @@
         inactive-text="文字显示"
         style="margin-left:20px;"
       ></el-switch>
-      <el-button type="primary" plain size="small" style="margin-left:100px;" @click="loadData">test</el-button>
     </div>
     <div>
       <el-progress
@@ -42,7 +41,40 @@
       <el-collapse v-model="activeNames">
         <el-collapse-item v-for="(voyage,index) in watchVoyages" :key="index" :name="index">
           <template slot="title">
-            {{voyage.voy}}
+            <div style="width:200px;">{{voyage.voy}}</div>
+            <table style="transform:scale(0.8)">
+              <thead>
+                <tr>
+                  <th>尺寸</th>
+                  <th>计卸</th>
+                  <th>实卸</th>
+                  <th>差额</th>
+                  <th>计装</th>
+                  <th>实装</th>
+                  <th>差额</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>20</td>
+                  <td>{{voyage.jx2}}</td>
+                  <td>{{voyage.sx2}}</td>
+                  <td :style="showCe(voyage.xce2)">{{voyage.xce2}}</td>
+                  <td>{{voyage.jz2}}</td>
+                  <td>{{voyage.sz2}}</td>
+                  <td :style="showCe(voyage.zce2)">{{voyage.zce2}}</td>
+                </tr>
+                <tr>
+                  <td>40</td>
+                  <td>{{voyage.jx4}}</td>
+                  <td>{{voyage.sx4}}</td>
+                  <td :style="showCe(voyage.xce4)">{{voyage.xce4}}</td>
+                  <td>{{voyage.jz4}}</td>
+                  <td>{{voyage.sz4}}</td>
+                  <td :style="showCe(voyage.zce4)">{{voyage.zce4}}</td>
+                </tr>
+              </tbody>
+            </table>
             <i
               class="el-icon-circle-plus-outline"
               style="width:50px;height:16px;margin-left:20px;color:green;"
@@ -61,7 +93,7 @@
               style="display:inline-block;margin-left:15px;"
               :watchRange="wr"
               :disSwitch="disSwitch"
-              @delWatchRange='delWatchRange(voyage,index)'
+              @delWatchRange="delWatchRange(voyage,index)"
             ></WatchRange>
           </div>
         </el-collapse-item>
@@ -137,6 +169,14 @@ export default {
     };
   },
   methods: {
+    //显示差额
+    showCe(val){
+      if (val == 0){
+        return {color:"#20a0ff"}
+      }else{
+        return {color:"red"}
+      }
+    },
     //刷新现有区块数据,没有区块加减
     loadData() {
       let me = this;
@@ -150,29 +190,35 @@ export default {
             edBay: wr.edBay
           });
         });
-        if (baySels.length > 0) {
-          getZyqk({
-            vscd: voy.vscd,
-            imvsvy: voy.imvsvy,
-            exvsvy: voy.exvsvy,
-            baySels
-          }).then(res => {
-            let { flag, data, errMsg, outMsg } = res;
-            if (flag) {
-              voy.watchRanges = data;
-              console.log(voy.voy);
-              voy.watchRanges.forEach(function(wr) {
-                console.log(wr.bgBay + "-" + wr.edBay);
-              });
-            } else {
-              me.myloading = false;
-              this.$message({
-                message: errMsg,
-                type: "error"
-              });
-            }
-          });
-        }
+        getZyqk({
+          vscd: voy.vscd,
+          imvsvy: voy.imvsvy,
+          exvsvy: voy.exvsvy,
+          baySels
+        }).then(res => {
+          let { flag, data, errMsg, outMsg } = res;
+          if (flag) {
+            voy.jz2 = GB.formatWidth(data.jz2, 5);
+            voy.sz2 = GB.formatWidth(data.sz2, 5);
+            voy.zce2 = GB.formatWidth(data.zce2, 5);
+            voy.jx2 = GB.formatWidth(data.jx2, 5);
+            voy.sx2 = GB.formatWidth(data.sx2, 5);
+            voy.xce2 = GB.formatWidth(data.xce2, 5);
+            voy.jz4 = GB.formatWidth(data.jz4, 5);
+            voy.sz4 = GB.formatWidth(data.sz4, 5);
+            voy.zce4 = GB.formatWidth(data.zce4, 5);
+            voy.jx4 = GB.formatWidth(data.jx4, 5);
+            voy.sx4 = GB.formatWidth(data.sx4, 5);
+            voy.xce4 = GB.formatWidth(data.xce4, 5);
+            voy.watchRanges = data.watchRanges;
+          } else {
+            me.myloading = false;
+            me.$message({
+              message: errMsg,
+              type: "error"
+            });
+          }
+        });
       });
     },
     chgUpper() {
@@ -232,10 +278,10 @@ export default {
       });
       me.newDialogVisible = false;
     },
-    delWatchRange(voyage,index){
+    delWatchRange(voyage, index) {
       let v = voyage.watchRanges[index];
-      voyage.watchRanges = voyage.watchRanges.filter(function(watchRange){
-        if (watchRange !== v){
+      voyage.watchRanges = voyage.watchRanges.filter(function(watchRange) {
+        if (watchRange !== v) {
           return watchRange;
         }
       });
@@ -248,11 +294,11 @@ export default {
         type: "warning"
       })
         .then(() => {
-          me.watchVoyages = me.watchVoyages.filter(function(voyage){
-            if (voy != voyage.voy){
+          me.watchVoyages = me.watchVoyages.filter(function(voyage) {
+            if (voy != voyage.voy) {
               return voyage;
             }
-          })
+          });
           me.$message({
             type: "success",
             message: "删除成功!"
@@ -320,6 +366,19 @@ export default {
 }
 .voyage {
   margin-top: 0px;
+}
+table {
+  border-collapse: collapse;
+}
+th,
+td {
+  width: 30px;
+  height: 15px;
+  padding: 0;
+  border: 1px dashed #20a0ff;
+  font: 10px "微软雅黑";
+  color: #20a0ff;
+  text-align: center;
 }
 </style>
 
