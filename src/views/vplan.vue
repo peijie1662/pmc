@@ -126,6 +126,7 @@ import { getYP, getYB } from "../api/api";
 export default {
   data() {
     return {
+      timer: null, //定时器
       YbDialogVisible: false, //预报对话框
       dialogVisible: false, //航次属性对话框
       dialogVessel: "",
@@ -187,7 +188,7 @@ export default {
     loadData() {
       let me = this;
       let d = GB.dateToInt(me.predate) + "";
-      V.Constant.setPageDate(d);      
+      V.Constant.setPageDate(d);
       me.init();
       getYP({ date: d }).then(res => {
         let { flag, data, errMsg, outMsg } = res;
@@ -223,17 +224,28 @@ export default {
     disBackground() {
       let me = this;
       let d = GB.dateToInt(me.predate) + "";
-      V.Constant.setPageDate(d);       
+      V.Constant.setPageDate(d);
       me.init();
       me.layer.scale({ x: me.scaleVal / 100, y: me.scaleVal / 100 });
       me.layer.draw();
     }
   },
   mounted() {
-    this.disBackground();
-    this.loadData();
+    let me = this;
+    if (me.timer) {
+      clearInterval(me.timer);
+    } else {
+      me.timer = setInterval(() => {
+        if(me.layer != null){
+          V.paintTimeline(me.layer);
+        } 
+      }, 1000);
+    }
+    me.disBackground();
+    me.loadData();
   },
   beforeDestroy() {
+    clearInterval(this.timer);
     this.dialogVessel = null;
     this.yps = null;
     this.compeleteDestroy();

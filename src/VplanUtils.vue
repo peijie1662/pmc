@@ -171,6 +171,48 @@ function paintX(layer) {
   }
 }
 
+//画时间线
+function paintTimeline(layer) {
+  let group = layer.findOne("#timeline");
+  if (group) {
+    group.remove();
+    group.destroy();
+  }
+  group = new Konva.Group({
+    id : "timeline"
+  });
+  let curTime = new Date();
+  let dt = GB.dateToInt(curTime);
+  let tm = GB.pad(curTime.getHours(), 2) + GB.pad(curTime.getMinutes(), 2);
+  let timeline_y = Constant.convertY(dt, tm);
+  group.add(
+    new Konva.Arrow({
+      x: Constant.getCV("MTBG") + 1400,
+      y: timeline_y,
+      points: [0, 0, -(Constant.getCV("MTBG") + 1400), 0],
+      pointerLength: 10,
+      pointerWidth: 10,
+      fill: "green",
+      stroke: "green",
+      strokeWidth: 1,
+      dash: [10, 5],
+    })
+  );
+  let timeStr = GB.formatDate(curTime,"hh:mm:ss");
+  group.add(
+    new Konva.Text({
+      x: 15,
+      y: timeline_y - 12,
+      text: timeStr,
+      fontSize: 12,
+      fontFamily: "Calibri",
+      fill: "red"
+    })
+  );
+  layer.add(group);
+  layer.draw();
+}
+
 // 画船
 function paintVessel(layer, vessel, showDialog) {
   // 该船的组ID
@@ -315,6 +357,7 @@ export default {
   Constant, //常量
   paintY, //竖线坐标
   paintX, //横线坐标
-  paintVessel //画船
+  paintVessel, //画船
+  paintTimeline //画时间线
 };
 </script>

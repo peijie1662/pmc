@@ -77,7 +77,7 @@
 .cwpFloatBar {
   display: block;
   position: fixed;
-  width: 100px;
+  width: 110px;
   right: 50px;
   top: 150px;
   border: 1px solid #409eff;
