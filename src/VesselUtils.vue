@@ -809,17 +809,19 @@ function coverPoint(clab, per, hatch) {
   if (hbay != null) {
     for (let i = 0; i < hbay.cells.length; i++) {
       if (parseInt(hbay.cells[i].clab) == clab) {
-        let r = hbay.cells[i].group.children[0];
-        let left = r.attrs.x;
-        let width = r.attrs.width;
-        re = Math.round(left + (width * per) / 100);
-        //减掉外框left
-        if (hbay.getFA() == "F") {
-          re -= hatch.fRect.attrs.x;
-        } else {
-          re -= hatch.paRect.attrs.x;
+        if (hbay.cells[i].group != null) {
+          let r = hbay.cells[i].group.children[0];
+          let left = r.attrs.x;
+          let width = r.attrs.width;
+          re = Math.round(left + (width * per) / 100);
+          //减掉外框left
+          if (hbay.getFA() == "F") {
+            re -= hatch.fRect.attrs.x;
+          } else {
+            re -= hatch.paRect.attrs.x;
+          }
+          break;
         }
-        break;
       }
     }
   }

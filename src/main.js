@@ -5,9 +5,9 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
 import routes from './routes'
 import './assets/iconfont/iconfont.css'
-import './assets/iconfont-crab/iconfont.css';
+import './assets/iconfont-crab/iconfont.css'
 import VueKonva from 'vue-konva'
-import "./assets/font/font.css";
+import "./assets/font/font.css"
 import VCharts from 'v-charts'
 
 Vue.use(VueRouter)

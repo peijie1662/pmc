@@ -1,6 +1,7 @@
 <template>
   <div>
     <div>
+      <el-button size="small" @click="inputOldVoy">指定航次</el-button>
       <el-select v-model="ypIndex" placeholder="请输入船舶代码" @change="vscdChg" size="small">
         <el-option v-for="(yp,index) in yps" :key="index" :label="yp.vscn" :value="index">
           <span style="float: left">{{ yp.vscd }}</span>
@@ -21,7 +22,7 @@
         style="margin-left:5px;width:100px;"
         @keyup.native="chgUpper"
       ></el-input>
-      <TB width="80px" height="30px" caption="查询" :fun="loadData"></TB>
+      <TB width="80px" height="30px" caption="查询" :fun="loadData"></TB>     
     </div>
     <div style="margin-top:10px;">
       <el-tabs type="border-card">
@@ -39,6 +40,24 @@
         </el-tab-pane>
       </el-tabs>
     </div>
+    <!-- 老航次输入 -->
+    <el-dialog title="航次输入" :visible.sync="voyDialogVisible" width="360px">
+      <div>
+        <span style="font-size:16px;">船舶代码</span>
+        <el-input v-model="old_vscd" size="small" style="width:200px;margin-left:20px;"></el-input>
+      </div>
+      <div style="margin-top: 20px;">
+        <span style="font-size:16px;">进口航次</span>
+        <el-input v-model="old_imvsvy" size="small" style="width:200px;margin-left:20px;"></el-input>
+      </div>
+      <div style="margin-top: 20px;">
+        <span style="font-size:16px;">出口航次</span>
+        <el-input v-model="old_exvsvy" size="small" style="width:200px;margin-left:20px;"></el-input>
+      </div>
+      <div style="position:relative;height:30px;margin-top:20px;">
+        <el-button type="success" style="float:right;" size="mini" @click="loadOldData">确定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -55,11 +74,15 @@ import TB from "./timeButtomComponent.vue";
 export default {
   data() {
     return {
+      voyDialogVisible: false,
       yps: [], //预排信息
       ypIndex: "", //
       vscd: "",
       imvsvy: "",
       exvsvy: "",
+      old_vscd: "",
+      old_imvsvy: "",
+      old_exvsvy: "",
       im: {
         hatchs: [],
         bays: []
@@ -75,11 +98,28 @@ export default {
     chgUpper() {
       this.vscd = this.vscd.toUpperCase();
     },
+    inputOldVoy() {
+      this.voyDialogVisible = true;
+    },
     vscdChg(index) {
       let yp = this.yps[index];
       this.vscd = yp.vscd;
       this.imvsvy = yp.vsvyim;
       this.exvsvy = yp.vsvyex;
+    },
+    loadOldData() {
+      let me = this;
+      me.yps.push({
+        vscd: me.old_vscd.toUpperCase(),
+        vsvyim: me.old_imvsvy.toUpperCase(),
+        vsvyex: me.old_exvsvy.toUpperCase(),
+        vscn: me.old_vscd.toUpperCase()
+      });
+      me.ypIndex = me.yps.length - 1;
+      me.vscd = me.old_vscd.toUpperCase();
+      me.imvsvy = me.old_imvsvy.toUpperCase();
+      me.exvsvy = me.old_exvsvy.toUpperCase();
+      me.voyDialogVisible = false;
     },
     loadData() {
       let me = this;
@@ -117,7 +157,7 @@ export default {
           });
           if (GB.isEmpty(me.im.hatchs)) {
             throw "找不到" + me.vscd + "的船模";
-          } 
+          }
           me.im.hatchs.forEach(function(h) {
             h.bays.forEach(function(b) {
               V.initBay(b);
@@ -252,5 +292,4 @@ export default {
 </script>
 
 <style scoped>
-
 </style>

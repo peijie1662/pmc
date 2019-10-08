@@ -122,6 +122,7 @@
 import GB from "../global.vue";
 import V from "../VplanUtils.vue";
 import { getYP, getYB } from "../api/api";
+import jsPDF from 'jspdf';
 
 export default {
   data() {
@@ -236,9 +237,9 @@ export default {
       clearInterval(me.timer);
     } else {
       me.timer = setInterval(() => {
-        if(me.layer != null){
+        if (me.layer != null) {
           V.paintTimeline(me.layer);
-        } 
+        }
       }, 1000);
     }
     me.disBackground();
