@@ -10,3 +10,7 @@ export const getExportBays = params => {return axios.post(`${base}/export`,param
 export const getYP = params => {return axios.post(`${base}/vessels/yp`,params).then(res => res.data);};
 export const getYB = params => {return axios.post(`${base}/vessels/yb`,params).then(res => res.data);};
 export const getZyqk = params => {return axios.post(`${base}/vessels/zyqk`,params).then(res => res.data);};
+
+//装船堆场PA预警
+export const getLywQds = params => {return axios.post(`${base}/lyw/qds`,params).then(res => res.data);};
+export const getLywActiveQueues = params => {return axios.post(`${base}/lyw/activequeues`,params).then(res => res.data);};

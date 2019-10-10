@@ -4,6 +4,7 @@ import NotFound from './404.vue'
 import PzInfo from './views/pzInfo.vue'
 import VplanInfo from './views/vplan.vue'
 import ZyqkInfo from './views/zyqk.vue'
+import Lyw from './views/loadYardWarn.vue'
 
 let routes = [{ 
     path: '/login',
@@ -56,6 +57,18 @@ let routes = [{
     children: [
         {
             path: '/monitoring', component: ZyqkInfo, name: '作业监控'
+        }
+    ]
+},
+{
+    path: '/',
+    component: Home,
+    name: '',
+    iconCls: 'el-icon-view',
+    leaf: true,
+    children: [
+        {
+            path: '/lyw', component: Lyw, name: '装船场地预警'
         }
     ]
 },
