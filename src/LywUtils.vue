@@ -2,7 +2,20 @@
 import GB from "./global.vue";
 
 const C = {
-  time_length: 12 * 60, //计算时间长度
+  time_length: 12 * 60, //计算时间长度(时间柱长度)
+  timeline_width: 20, //时间柱宽度
+  warn: {
+    //分级别警告
+    low: { max_num: 2, color: "#e9c341" },
+    mid: { max_num: 5, color: "#f2723c" },
+    high: { color: "red" }
+  },
+  show_type: {
+    //分类表示
+    circle: "circle",
+    cwp_rect: "cwp_rect",
+    loc_rect: "loc_rect"
+  },
   //
   qd_begin_x: 100,
   qd_begin_y: 50,
@@ -38,7 +51,7 @@ function drawQd(layer, qd, showQdDialog) {
         width: C.qd_width,
         height: C.qd_height,
         fill: "white",
-        stroke: "blue",
+        stroke: "#20a0ff",
         strokeWidth: 1
       })
     )
@@ -83,7 +96,7 @@ function cntrInfo(stage, layer, x, y, cntr, visible) {
       width: 300,
       height: 150,
       fill: "white",
-      stroke: "blue",
+      stroke: "#20a0ff",
       strokeWidth: 1
     })
   )
@@ -184,7 +197,7 @@ function cntrInfo(stage, layer, x, y, cntr, visible) {
   layer.add(gp);
 }
 
-function drawScale(stage, layer, qd, scaleItem, showDelayDialog) {
+function drawScale(stage, layer, qd, scaleItem, type, showDelayDialog) {
   if (scaleItem.cntrs.length > 0) {
     let dx = 0;
     scaleItem.cntrs.forEach((cntr, index) => {
@@ -195,12 +208,12 @@ function drawScale(stage, layer, qd, scaleItem, showDelayDialog) {
       let cir_x = qd.x + C.qd_queue_dx + dx;
       let cir_y =
         qd.y + C.qd_height + C.qd_queue_dy + scaleItem.scaleNode * C.scale_px;
-      //延后颜色
-      let ring_color = "blue";
+      //外框颜色
+      let ring_color = "#20a0ff";
       if (cntr.isDelay) {
         ring_color = "#f68a1e";
       }
-      //忽略颜色
+      //内部颜色
       let content_color = "#20a0ff";
       if (cntr.isIgnore) {
         content_color = "#dee1e6";
@@ -209,8 +222,9 @@ function drawScale(stage, layer, qd, scaleItem, showDelayDialog) {
       if (cntr.isConflict) {
         content_color = "red";
       }
-      group
-        .add(
+      //分类表示-圆圈表示
+      if (type == C.show_type.circle) {
+        group.add(
           new Konva.Circle({
             id: "no" + index,
             x: cir_x,
@@ -218,20 +232,75 @@ function drawScale(stage, layer, qd, scaleItem, showDelayDialog) {
             radius: 5,
             fill: content_color,
             stroke: ring_color,
-            strokeWidth: 2
+            strokeWidth: 1
           })
-        )
+        );
+      } else if (type == C.show_type.cwp_rect) {
+        group
+          .add(
+            new Konva.Rect({
+              x: cir_x,
+              y: cir_y,
+              width: 12,
+              height: 10,
+              fill: content_color,
+              stroke: ring_color,
+              strokeWidth: 1
+            })
+          )
+          .add(
+            new Konva.Text({
+              x: cir_x,
+              y: cir_y,
+              text: cntr.cwpn,
+              fontSize: 10,
+              fontFamily: "Calibri",
+              fill: "black"
+            })
+          );
+      } else if (type == C.show_type.loc_rect) {
+        group
+          .add(
+            new Konva.Rect({
+              x: cir_x,
+              y: cir_y,
+              width: 12,
+              height: 10,
+              fill: content_color,
+              stroke: ring_color,
+              strokeWidth: 1
+            })
+          )
+          .add(
+            new Konva.Text({
+              x: cir_x,
+              y: cir_y,
+              text: cntr.fmst,
+              fontSize: 10,
+              fontFamily: "Calibri",
+              fill: "black"
+            })
+          );
+      }
+      //添加事件
+      group
         .on("mousemove", function() {
-          let circle = group.find("Circle")[0];
-          circle.attrs.stroke = "#ff2525";
-          circle.attrs.strokeWidth = 2;
+          let shape =
+            type == C.show_type.circle
+              ? group.find("Circle")[0]
+              : group.find("Rect")[0];
+          shape.attrs.stroke = "#ff2525";
+          shape.attrs.strokeWidth = 1;
           cntrInfo(stage, layer, cir_x, cir_y, cntr, true);
           layer.draw();
         })
         .on("mouseout", function() {
-          let circle = group.find("Circle")[0];
-          circle.attrs.stroke = ring_color;
-          circle.attrs.strokeWidth = 2;
+          let shape =
+            type == C.show_type.circle
+              ? group.find("Circle")[0]
+              : group.find("Rect")[0];
+          shape.attrs.stroke = ring_color;
+          shape.attrs.strokeWidth = 1;
           cntrInfo(stage, layer, cir_x, cir_y, cntr, false);
           layer.draw();
         })
@@ -250,10 +319,10 @@ function drawTimeline(layer, drawQueues) {
     new Konva.Rect({
       x: 20,
       y: C.qd_begin_y + C.qd_height + C.qd_queue_dy,
-      width: 50,
+      width: C.timeline_width,
       height: C.stage_height,
       fill: "white",
-      stroke: "blue",
+      stroke: "#20a0ff",
       strokeWidth: 1
     })
   );
@@ -261,26 +330,55 @@ function drawTimeline(layer, drawQueues) {
     let maxScale = C.time_length / C.scale_min;
     for (let i = 0; i <= maxScale; i++) {
       let conflictNum = 0;
+      let conflictTime = null;
       drawQueues.forEach(dq => {
         dq.scales[i].cntrs.forEach(c => {
           if (c.isConflict) {
             conflictNum += 1;
+            conflictTime = dq.scales[i].scaleTime;
           }
         });
       });
       //绘制冲突
       if (conflictNum > 0) {
+        let warn_color = C.warn.high.color;
+        if (conflictNum <= C.warn.low.max_num) {
+          warn_color = C.warn.low.color;
+        } else if (conflictNum <= C.warn.mid.max_num) {
+          warn_color = C.warn.mid.color;
+        }
+        let ry = C.qd_begin_y + C.qd_height + C.qd_queue_dy + i * C.scale_px;
         gp.add(
           new Konva.Rect({
             x: 20,
-            y: C.qd_begin_y + C.qd_height + C.qd_queue_dy + i*C.scale_px,
-            width: 50,
+            y: ry,
+            width: C.timeline_width,
             height: C.scale_px,
-            fill: "red",
-            stroke: "red",
+            fill: warn_color,
+            stroke: warn_color,
             strokeWidth: 1
           })
-        );
+        )
+          .add(
+            new Konva.Line({
+              points: [20 + C.timeline_width, ry, C.stage_width, ry],
+              stroke: warn_color,
+              strokeWidth: 1,
+              lineCap: "round",
+              lineJoin: "round",
+              dash: [5, 5]
+            })
+          )
+          .add(
+            new Konva.Text({
+              x: 20 + C.timeline_width + 2,
+              y: ry + 1,
+              text: GB.formatDate(conflictTime, "hh:mm"),
+              fontSize: 10,
+              fontFamily: "Calibri",
+              fill: "black"
+            })
+          );
       }
     }
   }

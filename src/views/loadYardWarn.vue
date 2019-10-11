@@ -1,6 +1,17 @@
 <template>
   <div>
-    <div></div>
+    <div class="header">
+      <el-radio-group
+        v-model="showType"
+        size="mini"
+        @change="mainfun"
+        style="float:right;margin-right:100px;"
+      >
+        <el-radio-button label="circle">简图</el-radio-button>
+        <el-radio-button label="cwp_rect">CWP</el-radio-button>
+        <el-radio-button label="loc_rect">场地</el-radio-button>
+      </el-radio-group>
+    </div>
     <div ref="lywdiv"></div>
     <!-- 延后设置窗口 -->
     <el-dialog title="延后设置" :visible.sync="delayDialogVisible" width="300px">
@@ -70,7 +81,9 @@ export default {
       qd: "",
       qdDialogVisible: false,
       qdVoys: [],
-      voyNoSel: ""
+      voyNoSel: "",
+      //
+      showType: L.C.show_type.circle
     };
   },
   methods: {
@@ -147,7 +160,7 @@ export default {
     drawQds() {
       let me = this;
       me.layer.clear();
-      L.drawTimeline(me.layer,me.drawQueues);
+      L.drawTimeline(me.layer, me.drawQueues);
       me.drawQueues.forEach((dq, index) => {
         let qd = {
           qdno: dq.qdno,
@@ -157,7 +170,14 @@ export default {
         L.drawQd(me.layer, qd, me.showQdDialog);
         let ss = dq.scales;
         ss.forEach(item => {
-          L.drawScale(me.stage, me.layer, qd, item, me.showDelayDialog);
+          L.drawScale(
+            me.stage,
+            me.layer,
+            qd,
+            item,
+            me.showType,
+            me.showDelayDialog
+          );
         });
       });
       me.layer.draw();
@@ -346,4 +366,10 @@ export default {
 </script>
 
 <style scoped>
+.header {
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid #c0c4cc;
+  padding: 10px;
+}
 </style>
