@@ -215,6 +215,9 @@ function drawScale(stage, layer, qd, scaleItem, type, showDelayDialog) {
       }
       //内部颜色
       let content_color = "#20a0ff";
+      if (cntr.jbst == "PD") {
+        content_color = "yellow";
+      }
       if (cntr.isIgnore) {
         content_color = "#dee1e6";
       }
@@ -235,6 +238,31 @@ function drawScale(stage, layer, qd, scaleItem, type, showDelayDialog) {
             strokeWidth: 1
           })
         );
+        //是同船最后一个
+        if (cntr.isVesselLast) {
+          group
+            .add(
+              new Konva.Ring({
+                x: cir_x,
+                y: cir_y,
+                innerRadius: 6,
+                outerRadius: 8,
+                fill: "#ff5500",
+                stroke: "#ff5500",
+                strokeWidth: 1
+              })
+            )
+            .add(
+              new Konva.Text({
+                x: qd.x + 5,
+                y: cir_y - 5,
+                text: cntr.vscd[0],
+                fontSize: 12,
+                fontFamily: "Calibri",
+                fill: "black"
+              })
+            );
+        }
       } else if (type == C.show_type.cwp_rect) {
         group
           .add(
@@ -331,15 +359,18 @@ function drawTimeline(layer, drawQueues) {
     for (let i = 0; i <= maxScale; i++) {
       let conflictNum = 0;
       let conflictTime = null;
+      let nodeTime = drawQueues[0].scales[i].scaleTime;
       drawQueues.forEach(dq => {
         dq.scales[i].cntrs.forEach(c => {
           if (c.isConflict) {
             conflictNum += 1;
-            conflictTime = dq.scales[i].scaleTime;
+            //conflictTime = dq.scales[i].scaleTime;
           }
         });
       });
       //绘制冲突
+      let ry =
+        C.qd_begin_y + C.qd_height + C.qd_queue_dy + (i + 1) * C.scale_px;
       if (conflictNum > 0) {
         let warn_color = C.warn.high.color;
         if (conflictNum <= C.warn.low.max_num) {
@@ -347,7 +378,6 @@ function drawTimeline(layer, drawQueues) {
         } else if (conflictNum <= C.warn.mid.max_num) {
           warn_color = C.warn.mid.color;
         }
-        let ry = C.qd_begin_y + C.qd_height + C.qd_queue_dy + i * C.scale_px;
         gp.add(
           new Konva.Rect({
             x: 20,
@@ -373,12 +403,34 @@ function drawTimeline(layer, drawQueues) {
             new Konva.Text({
               x: 20 + C.timeline_width + 2,
               y: ry + 1,
-              text: GB.formatDate(conflictTime, "hh:mm"),
+              //text: GB.formatDate(conflictTime, "hh:mm"),
+              text: GB.formatDate(nodeTime, "hh:mm"),
               fontSize: 10,
               fontFamily: "Calibri",
               fill: "black"
             })
           );
+      } else {
+        //无冲突
+        gp.add(
+          new Konva.Line({
+            points: [20 + C.timeline_width, ry, C.stage_width, ry],
+            stroke: "#20a0ff",
+            strokeWidth: 1,
+            lineCap: "round",
+            lineJoin: "round",
+            dash: [5, 5]
+          })
+        ).add(
+          new Konva.Text({
+            x: 20 + C.timeline_width + 2,
+            y: ry + 1,
+            text: GB.formatDate(nodeTime, "hh:mm"),
+            fontSize: 10,
+            fontFamily: "Calibri",
+            fill: "black"
+          })
+        );
       }
     }
   }

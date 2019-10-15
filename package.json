@@ -19,7 +19,8 @@
     "v-charts": "^1.19.0",
     "vue": "^2.5.11",
     "vue-konva": "^2.0.0",
-    "vue-router": "^3.0.2"
+    "vue-router": "^3.0.2",
+    "vuedraggable": "^2.23.2"
   },
   "browserslist": [
     "> 1%",

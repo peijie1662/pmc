@@ -14,3 +14,5 @@ export const getZyqk = params => {return axios.post(`${base}/vessels/zyqk`,param
 //装船堆场PA预警
 export const getLywQds = params => {return axios.post(`${base}/lyw/qds`,params).then(res => res.data);};
 export const getLywActiveQueues = params => {return axios.post(`${base}/lyw/activequeues`,params).then(res => res.data);};
+export const getLywPendingCwps = params => {return axios.post(`${base}/lyw/pendingcwps`,params).then(res => res.data);};
+export const getLywPendingCntrs = params => {return axios.post(`${base}/lyw/pendingcntrs`,params).then(res => res.data);};
