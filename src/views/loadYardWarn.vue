@@ -7,11 +7,7 @@
         @click="cwpDialogVisible = true"
         style="margin-left:50px;width:100px;"
       >+ CWP</el-button>
-      <el-button
-        size="mini"
-        @click="efficentDialogVisible = true"
-        style="margin-left:5px;width:100px;"
-      >效率</el-button>
+      <el-button size="mini" @click="showEfficent" style="margin-left:5px;width:100px;">效率</el-button>
       <el-radio-group v-model="showType" size="mini" @change="mainfun" style="margin-left:30px;">
         <el-radio-button label="circle">简图</el-radio-button>
         <el-radio-button label="cwp_rect">CWP</el-radio-button>
@@ -65,7 +61,7 @@
     </el-dialog>
     <!-- 效率设置窗口 -->
     <el-dialog title="桥吊效率设置" :visible.sync="efficentDialogVisible" width="70%">
-      <Efficent></Efficent>
+      <Efficent :qds="qdSeq" :aqs="efficentAqs" @efficentChange="efficentChange"></Efficent>
     </el-dialog>
   </div>
 </template>
@@ -99,11 +95,62 @@ export default {
       //
       cwpDialogVisible: false,
       efficentDialogVisible: false,
+      efficentAqs: [], //传递给效率窗口的aqs
+      qdEfficents: [], //效率
       //
       showType: L.C.show_type.circle
     };
   },
   methods: {
+    getEfficent(cntr) {
+      let me = this;
+      //1.找到效率设置
+      let qdno = cntr.jbst == "PD" ? cntr.actualQd : cntr.qdno;
+      let qd = me.qdEfficents.find(item => item.qdno == qdno);
+      let mov = 0;
+      if (qd) {
+        let v = qd.vessels.find(item => item.vessel == cntr.vscd);
+        if (v && v.efficent > 0) {
+          mov = v.efficent;
+        } else if (qd.default > 0) {
+          mov = qd.default;
+        } else {
+          me.$message({
+            message:
+              qd.qdno +
+              "/" +
+              cntr.vscd +
+              "的效率设置未找到，同时未发现桥吊默认效率，请先设置效率。",
+            type: "error",
+            duration: 8000
+          });
+          return -1;
+        }
+      } else {
+        me.$message({
+          message: cntr.actualQd + "的效率设置未找到，请先设置效率。",
+          type: "error",
+          duration: 8000
+        });
+        return -1;
+      }
+      //2.按照效率计算作业时间
+      let efficent = 60 / mov;
+      if (cntr.isTwin) {
+        efficent = efficent / 2;
+      }
+      return efficent;
+    },
+    efficentChange() {
+      let me = this;
+      me.efficentDialogVisible = false;
+      //TODO
+    },
+    showEfficent() {
+      let me = this;
+      me.efficentAqs = [...me.drawQueues];
+      me.efficentDialogVisible = true;
+    },
     addQdPendingCwps(qdCwps) {
       let me = this;
       //追加前删除所有追加项，否则会重复。
@@ -268,27 +315,41 @@ export default {
     //计算激活的装卸时间点，同时计算延时
     calculateTime() {
       let me = this;
-      me.activeQueues.forEach(aq => {
-        let preTime = new Date(); //上一个箱的时间点
-        aq.queue.forEach(cntr => {
-          cntr.isConflict = false;
-          cntr.isVesselLast = false;
-          cntr.conflict = [];
-          let voyKey = cntr.vscd + "/" + cntr.vsvy + "-" + cntr.vsdr;
-          cntr.isIgnore = me.voyNoSel.has(voyKey) || cntr.vsdr == "I"; //标记忽略
-          let dt = me.delay[cntr.key];
-          if (dt) {
-            cntr.isDelay = true;
-            cntr.opDate = new Date(dt);
-            preTime = new Date(dt);
-          } else {
-            cntr.isDelay = false;
-            cntr.opDate = new Date(
-              preTime.setMinutes(preTime.getMinutes() + L.C.common_eff)
-            );
-          }
+      let StopIteration = new Error("StopIteration");
+      try {
+        me.activeQueues.forEach(aq => {
+          let preTime = new Date(); //上一个箱的时间点
+          aq.queue.forEach(cntr => {
+            cntr.isConflict = false;
+            cntr.isVesselLast = false;
+            cntr.conflict = [];
+            let voyKey = cntr.vscd + "/" + cntr.vsvy + "-" + cntr.vsdr;
+            cntr.isIgnore = me.voyNoSel.has(voyKey) || cntr.vsdr == "I"; //标记忽略
+            let dt = me.delay[cntr.key];
+            if (dt) {
+              cntr.isDelay = true;
+              cntr.opDate = new Date(dt);
+              preTime = new Date(dt);
+            } else {
+              cntr.isDelay = false;
+              let eff = me.getEfficent(cntr);
+              if (eff < 0) {
+                throw StopIteration;
+              }
+              cntr.opDate = new Date(
+                //preTime.setMinutes(preTime.getMinutes() + L.C.common_eff)
+                preTime.setMinutes(preTime.getMinutes() + eff)
+              );
+            }
+          });
         });
-      });
+      } catch (e) {
+        if (e !== StopIteration) {
+          throw e;
+        } else {
+          return;
+        }
+      }
       //标记某船的最后一个箱
       me.activeQueues.forEach(aq => {
         let vessel = "";
@@ -384,13 +445,20 @@ export default {
             }
           }
         });
-        //5.桥吊下队列属性
+        //5.统计桥吊下船
+        newItem.vessels = [];
+        item.queue.forEach(cntr => {
+          if (newItem.vessels.indexOf(cntr.vscd) < 0) {
+            newItem.vessels.push(cntr.vscd);
+          }
+        });
+        //6.桥吊下队列属性
         item.queue.forEach(cntr => {
           if (cntr.vsdr == "E") {
             newItem.isOnlyIm = false;
           }
         });
-        //6.保存到可绘制
+        //7.保存到可绘制
         me.drawQueues.push(newItem);
       });
     },
@@ -449,6 +517,11 @@ export default {
   },
   mounted() {
     let me = this;
+    //0.保存的效率
+    let efficents = JSON.parse(localStorage.getItem("efficents"));
+    if (efficents) {
+      me.qdEfficents = efficents;
+    }
     //1.保存的延后时间
     let delay = sessionStorage.getItem("delay");
     if (delay) {
