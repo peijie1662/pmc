@@ -4,12 +4,30 @@ import GB from "./global.vue";
 const C = {
   time_length: 12 * 60, //计算时间长度(时间柱长度)
   timeline_width: 20, //时间柱宽度
-  warn: {
-    //分级别警告
-    low: { max_num: 2, color: "#e9c341" },
-    mid: { max_num: 5, color: "#f2723c" },
-    high: { color: "red" }
-  },
+  //warn: {
+  //  //分级别警告
+  //  low: { max_num: 2, color: "#e9c341" },
+  //  mid: { max_num: 5, color: "#f2723c" },
+  //  high: { color: "red" }
+  //},
+  timeline_options: [
+    {
+      value: 2,
+      label: "2小时"
+    },
+    {
+      value: 4,
+      label: "4小时"
+    },
+    {
+      value: 8,
+      label: "8小时"
+    },
+    {
+      value: 12,
+      label: "12小时"
+    }
+  ],
   show_type: {
     //分类表示
     circle: "circle",
@@ -20,7 +38,7 @@ const C = {
   qd_begin_x: 100,
   qd_begin_y: 50,
   qd_width: 100,
-  qd_height: 50,
+  qd_height: 45,
   qd_interval: 20,
   qd_queue_dx: 20,
   qd_queue_dy: 2,
@@ -30,15 +48,24 @@ const C = {
   stage_width: 2000,
   stage_height: 3000,
   //
-  common_eff: 3, //每个几分钟 //TODO 以后可能是属于桥吊属性
+  //common_eff: 3, //每个几分钟 //TODO 以后可能是属于桥吊属性
   scale_px: 20, //刻度,即间隔多少像素为1刻度
   scale_min: 5, //刻度值，即每刻度代表多少分钟
   //
-  conflict_bay_num: 4, //贝位差小于等于该值就是冲突，如果贝位是一单一双，需要再减1
-  conflict_min: 6 //统计冲突的时间范围
+  //conflict_bay_num: 4, //贝位差小于等于该值就是冲突，如果贝位是一单一双，需要再减1
+  //conflict_min: 6 //统计冲突的时间范围
+  default_conflict: {
+    conflict_bay_num: 4, //贝位差小于等于该值就是冲突
+    conflict_min: 6, //统计冲突的时间范围
+    low_num: 2,
+    low_color: "#e9c341",
+    mid_num: 5,
+    mid_color: "#f2723c",
+    high_color: "red"
+  }
 };
 
-function drawQd(layer, qd, showQdDialog) {
+function drawQd(layer, qd, showQdDialog, timeline_length) {
   let group = new Konva.Group({
     id: qd.qdno + "-group"
   });
@@ -68,7 +95,7 @@ function drawQd(layer, qd, showQdDialog) {
   let x1 = qd.x + C.qd_queue_dx;
   let y1 = qd.y + C.qd_height + C.qd_queue_dy;
   let x2 = x1;
-  let y2 = 3000;
+  let y2 = y1 + ((timeline_length * 60) / C.scale_min + 1) * C.scale_px;
   group
     .add(
       new Konva.Line({
@@ -338,7 +365,7 @@ function drawScale(stage, layer, qd, scaleItem, type, showDelayDialog) {
   }
 }
 
-function drawTimeline(layer, drawQueues) {
+function drawTimeline(layer, drawQueues, conflict, timeline_length) {
   let gp = new Konva.Group({
     id: "left-group"
   });
@@ -348,14 +375,15 @@ function drawTimeline(layer, drawQueues) {
       x: 20,
       y: C.qd_begin_y + C.qd_height + C.qd_queue_dy,
       width: C.timeline_width,
-      height: C.stage_height,
+      height: ((timeline_length * 60) / C.scale_min + 1) * C.scale_px,
       fill: "white",
       stroke: "#20a0ff",
       strokeWidth: 1
     })
   );
   if (drawQueues) {
-    let maxScale = C.time_length / C.scale_min;
+    //let maxScale = C.time_length / C.scale_min;
+    let maxScale = (timeline_length * 60) / C.scale_min;
     for (let i = 0; i <= maxScale; i++) {
       let conflictNum = 0;
       let conflictTime = null;
@@ -364,7 +392,6 @@ function drawTimeline(layer, drawQueues) {
         dq.scales[i].cntrs.forEach(c => {
           if (c.isConflict) {
             conflictNum += 1;
-            //conflictTime = dq.scales[i].scaleTime;
           }
         });
       });
@@ -372,11 +399,11 @@ function drawTimeline(layer, drawQueues) {
       let ry =
         C.qd_begin_y + C.qd_height + C.qd_queue_dy + (i + 1) * C.scale_px;
       if (conflictNum > 0) {
-        let warn_color = C.warn.high.color;
-        if (conflictNum <= C.warn.low.max_num) {
-          warn_color = C.warn.low.color;
-        } else if (conflictNum <= C.warn.mid.max_num) {
-          warn_color = C.warn.mid.color;
+        let warn_color = conflict.high_color;
+        if (conflictNum <= conflict.low_num) {
+          warn_color = conflict.low_color;
+        } else if (conflictNum <= conflict.mid_num) {
+          warn_color = conflict.mid_color;
         }
         gp.add(
           new Konva.Rect({

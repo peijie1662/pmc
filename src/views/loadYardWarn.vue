@@ -8,12 +8,25 @@
         style="margin-left:50px;width:100px;"
       >+ CWP</el-button>
       <el-button size="mini" @click="showEfficent" style="margin-left:5px;width:100px;">效率</el-button>
+      <el-button size="mini" @click="showConflict" style="margin-left:5px;width:100px;">冲突</el-button>
+      <el-select
+        v-model="timeline_length"
+        size="mini"
+        @change="mainfun"
+        style="width:100px;margin-left:10px;"
+      >
+        <el-option
+          v-for="item in timeline_options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+        ></el-option>
+      </el-select>
       <el-radio-group v-model="showType" size="mini" @change="mainfun" style="margin-left:30px;">
         <el-radio-button label="circle">简图</el-radio-button>
         <el-radio-button label="cwp_rect">CWP</el-radio-button>
         <el-radio-button label="loc_rect">场地</el-radio-button>
       </el-radio-group>
-      <el-button size="mini" style="margin-left:50px;width:100px;">刷新</el-button>
     </div>
     <div ref="lywdiv"></div>
     <!-- 延后设置窗口 -->
@@ -63,6 +76,10 @@
     <el-dialog title="桥吊效率设置" :visible.sync="efficentDialogVisible" width="70%">
       <Efficent :qds="qdSeq" :aqs="efficentAqs" @efficentChange="efficentChange"></Efficent>
     </el-dialog>
+    <!-- 冲突设置窗口 -->
+    <el-dialog title="冲突设置" :visible.sync="conflictDialogVisible">
+      <Conflict :conflict="newConflict" @conflictChange="conflictChange"></Conflict>
+    </el-dialog>
   </div>
 </template>
 
@@ -72,6 +89,7 @@ import GB from "../global.vue";
 import L from "../LywUtils.vue";
 import AddCwp from "./addCwpComponent.vue";
 import Efficent from "./qdEfficent.vue";
+import Conflict from "./conflictSet.vue";
 
 export default {
   data() {
@@ -79,6 +97,8 @@ export default {
       stage: null,
       layer: null,
       hideIm: true,
+      timeline_length: 4,
+      timeline_options: L.C.timeline_options,
       qdSeq: [], //桥吊顺序
       activeQueues: [], //激活队列
       drawQueues: [], //可绘制队列，即经过刻度转换后队列。
@@ -98,6 +118,10 @@ export default {
       efficentAqs: [], //传递给效率窗口的aqs
       qdEfficents: [], //效率
       //
+      conflict: L.C.default_conflict,
+      newConflict: "", //传递给窗口的conflict
+      conflictDialogVisible: false,
+      //
       showType: L.C.show_type.circle
     };
   },
@@ -109,18 +133,26 @@ export default {
       let qd = me.qdEfficents.find(item => item.qdno == qdno);
       let mov = 0;
       if (qd) {
+        //找船效率
         let v = qd.vessels.find(item => item.vessel == cntr.vscd);
-        if (v && v.efficent > 0) {
-          mov = v.efficent;
-        } else if (qd.default > 0) {
-          mov = qd.default;
-        } else {
+        if (v) {
+          let v_efficent = cntr.vsdr == "E" ? v.exEfficent : v.imEfficent;
+          if (v_efficent > 0) {
+            mov = v_efficent;
+          }
+        }
+        //找桥吊效率
+        if (mov == 0) {
+          let qd_default = cntr.vsdr == "E" ? qd.exDefault : qd.imDefault;
+          if (qd_default > 0) {
+            mov = qd_default;
+          }
+        }
+        //找不到效率
+        if (mov == 0) {
           me.$message({
             message:
-              qd.qdno +
-              "/" +
-              cntr.vscd +
-              "的效率设置未找到，同时未发现桥吊默认效率，请先设置效率。",
+              qdno + "/" + cntr.vscd + "的效率设置未找到，请先设置效率。",
             type: "error",
             duration: 8000
           });
@@ -128,7 +160,7 @@ export default {
         }
       } else {
         me.$message({
-          message: cntr.actualQd + "的效率设置未找到，请先设置效率。",
+          message: qdno + "的效率设置未找到，请先设置效率。",
           type: "error",
           duration: 8000
         });
@@ -136,15 +168,31 @@ export default {
       }
       //2.按照效率计算作业时间
       let efficent = 60 / mov;
-      if (cntr.isTwin) {
+      if (cntr.twin == "Y") {
         efficent = efficent / 2;
       }
       return efficent;
     },
-    efficentChange() {
+    conflictChange(conflict) {
+      let me = this;
+      me.conflictDialogVisible = false;
+      if (conflict) {
+        me.conflict = conflict;
+        me.mainfun();
+      }
+    },
+    efficentChange(qdEfficents) {
       let me = this;
       me.efficentDialogVisible = false;
-      //TODO
+      if (qdEfficents) {
+        me.qdEfficents = qdEfficents;
+        me.mainfun();
+      }
+    },
+    showConflict() {
+      let me = this;
+      me.newConflict = { ...me.conflict };
+      me.conflictDialogVisible = true;
     },
     showEfficent() {
       let me = this;
@@ -168,9 +216,9 @@ export default {
               getLywPendingCntrs(qd.pendingCwps).then(res => {
                 let { flag, data, errMsg } = res;
                 if (flag) {
-                  let aq = me.activeQueues.filter(aq => {
-                    return aq.qdno == qd.qdno;
-                  })[0];
+                  //加上actualQd
+                  data.forEach(item => (item.actualQd = qd.qdno));
+                  let aq = me.activeQueues.find(item => item.qdno == qd.qdno);
                   if (aq) {
                     //已有桥吊，就追加队列
                     aq.queue = aq.queue.concat(data);
@@ -230,9 +278,7 @@ export default {
       let me = this;
       me.qdDialogVisible = true;
       me.qdVoys = [];
-      let dq = me.drawQueues.filter(item => {
-        return item.qdno == qd.qdno;
-      })[0];
+      let dq = me.drawQueues.find(item => item.qdno == qd.qdno);
       if (dq) {
         me.qdVoys = dq.voys;
       }
@@ -286,7 +332,7 @@ export default {
     drawQds() {
       let me = this;
       me.layer.clear();
-      L.drawTimeline(me.layer, me.drawQueues);
+      L.drawTimeline(me.layer, me.drawQueues, me.conflict, me.timeline_length);
       let drawIndex = 0;
       me.drawQueues.forEach((dq, index) => {
         if (!(dq.isOnlyIm && me.hideIm)) {
@@ -295,17 +341,20 @@ export default {
             x: L.C.qd_begin_x + (L.C.qd_width + L.C.qd_interval) * drawIndex,
             y: L.C.qd_begin_y
           };
-          L.drawQd(me.layer, qd, me.showQdDialog);
+          L.drawQd(me.layer, qd, me.showQdDialog, me.timeline_length);
+          let maxNode = (me.timeline_length * 60) / L.C.scale_min + 1;
           let ss = dq.scales;
           ss.forEach(item => {
-            L.drawScale(
-              me.stage,
-              me.layer,
-              qd,
-              item,
-              me.showType,
-              me.showDelayDialog
-            );
+            if (item.scaleNode <= maxNode) {
+              L.drawScale(
+                me.stage,
+                me.layer,
+                qd,
+                item,
+                me.showType,
+                me.showDelayDialog
+              );
+            }
           });
           drawIndex += 1;
         }
@@ -338,7 +387,7 @@ export default {
               }
               cntr.opDate = new Date(
                 //preTime.setMinutes(preTime.getMinutes() + L.C.common_eff)
-                preTime.setMinutes(preTime.getMinutes() + eff)
+                preTime.setSeconds(preTime.getSeconds() + eff * 60)
               );
             }
           });
@@ -397,7 +446,7 @@ export default {
             let cs = item.queue.filter(cntr => {
               return (
                 Math.abs(cntr.opDate - calTime) / 1000 / 60 <=
-                  L.C.conflict_min / 2 && !cntr.isIgnore
+                  me.conflict.conflict_min / 2 && !cntr.isIgnore
               );
             });
             calCntrs = calCntrs.concat(cs);
@@ -405,12 +454,15 @@ export default {
           //2.2计算冲突
           calCntrs.forEach(cntr => {
             let conflict = calCntrs.filter(c => {
-              let bay_interval = Math.abs(cntr.fmrw - c.fmrw);
-              if ((cntr.fmrw + c.fmrw) % 2 == 1) {
+              //单单 (a-b)/2， 单双或双双 (a-b)/2-1
+              let bay_interval = Math.abs(cntr.fmrw - c.fmrw) / 2;
+              if (cntr.fmrw % 2 == 0 || c.fmrw % 2 == 0) {
                 bay_interval -= 1;
               }
               return (
-                cntr.qdno != c.qdno && cntr.fmst == c.fmst && bay_interval <= 4
+                cntr.qdno != c.qdno &&
+                cntr.fmst == c.fmst &&
+                bay_interval <= me.conflict.conflict_bay_num
               );
             });
             if (conflict.length > 0) {
@@ -517,17 +569,22 @@ export default {
   },
   mounted() {
     let me = this;
-    //0.保存的效率
+    //1.保存的冲突
+    let conflict = JSON.parse(localStorage.getItem("conflict"));
+    if (conflict) {
+      me.conflict = conflict;
+    }
+    //2.保存的效率
     let efficents = JSON.parse(localStorage.getItem("efficents"));
     if (efficents) {
       me.qdEfficents = efficents;
     }
-    //1.保存的延后时间
+    //3.保存的延后时间
     let delay = sessionStorage.getItem("delay");
     if (delay) {
       me.delay = JSON.parse(delay);
     }
-    //2.保存的忽略航次
+    //4.保存的忽略航次
     let voyNoSel = sessionStorage.getItem("voyNoSel");
     me.voyNoSel = new Set();
     if (voyNoSel) {
@@ -535,7 +592,7 @@ export default {
         me.voyNoSel = new Set(JSON.parse(voyNoSel));
       }
     }
-    //3.读数据
+    //5.读数据
     me.init();
     Promise.all([me.loadQds(), me.loadLywActiveQueues()])
       .then()
@@ -545,7 +602,8 @@ export default {
   },
   components: {
     AddCwp,
-    Efficent
+    Efficent,
+    Conflict
   }
 };
 </script>

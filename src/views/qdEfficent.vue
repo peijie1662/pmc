@@ -7,26 +7,26 @@
           <b>{{qd.qdno}}</b>
         </div>
         <div style="overflow:hidden;">
-          <span style="margin-left:5px;margin-top:5px;float:left;">默认效率：</span>
-          <el-input-number
-            v-model="qd.default"
-            size="mini"
-            :min="0"
-            style="width:100px;float:right;"
-          ></el-input-number>
+          <span style="margin-left:5px;margin-top:3px;float:left;">默认效率</span>
+          <div style="float:right;">
+            <span>装：</span>
+            <el-input-number v-model="qd.exDefault" size="mini" :min="0" style="width:100px;"></el-input-number>
+            <span>卸：</span>
+            <el-input-number v-model="qd.imDefault" size="mini" :min="0" style="width:100px;"></el-input-number>
+          </div>
         </div>
         <div
           v-for="(vessel,index) in qd.vessels"
           :key="index"
           style="margin-top:5px;overflow:hidden;"
         >
-          <span style="margin-left:5px;margin-top:5px;float:left;">{{vessel.vessel}}</span>
-          <el-input-number
-            v-model="vessel.efficent"
-            size="mini"
-            :min="0"
-            style="width:100px;float:right;"
-          ></el-input-number>
+          <span style="margin-left:5px;margin-top:3px;float:left;">{{vessel.vessel}}</span>
+          <div style="float:right;">
+            <span>装：</span>
+            <el-input-number v-model="vessel.exEfficent" size="mini" :min="0" style="width:100px;"></el-input-number>
+            <span>卸：</span>
+            <el-input-number v-model="vessel.imEfficent" size="mini" :min="0" style="width:100px;"></el-input-number>
+          </div>
         </div>
       </div>
     </div>
@@ -51,7 +51,7 @@
 export default {
   data() {
     return {
-      //{default:0,vessels:[]}
+      //{exDefault:0,imDefault:0,vessels:[]}
       qdEfficents: []
     };
   },
@@ -71,7 +71,7 @@ export default {
       handler(newQds, oldValue) {
         let me = this;
         me.qdEfficents = me.qds.map(qd => {
-          return { qdno: qd.qdno, default: 0, vessels: [] };
+          return { qdno: qd.qdno, exDefault: 0, imDefault: 0, vessels: [] };
         });
       },
       immediate: true
@@ -84,7 +84,7 @@ export default {
           let qe = me.qdEfficents.find(item => item.qdno == qd.qdno);
           qe.vessels = [];
           qd.vessels.forEach(v => {
-            qe.vessels.push({ vessel: v, efficent: 0 });
+            qe.vessels.push({ vessel: v, exEfficent: 0, imEfficent: 0 });
           });
         });
         //3.从保存的内容中查找是否设置过效率
@@ -93,14 +93,22 @@ export default {
           me.qdEfficents.forEach(qe => {
             let sqe = saveQes.find(item => item.qdno == qe.qdno);
             //3.1 默认效率
-            if (sqe.default > 0) {
-              qe.default = sqe.default;
+            if (sqe.exDefault > 0) {
+              qe.exDefault = sqe.exDefault;
+            }
+            if (sqe.imDefault > 0) {
+              qe.imDefault = sqe.imDefault;
             }
             //3.2 船效率
             qe.vessels.forEach(qv => {
               let sqv = sqe.vessels.find(item => item.vessel == qv.vessel);
-              if (sqv && sqv.efficent > 0) {
-                qv.efficent = sqv.efficent;
+              if (sqv) {
+                if (sqv.exEfficent > 0) {
+                  qv.exEfficent = sqv.exEfficent;
+                }
+                if (sqv.imEfficent > 0) {
+                  qv.imEfficent = sqv.imEfficent;
+                }
               }
             });
           });
@@ -129,7 +137,7 @@ export default {
   padding: 10px;
 }
 .qd {
-  width: 202px;
+  width: 370px;
   height: 160px;
   border: 1px solid #c0c4cc;
   float: left;
