@@ -374,21 +374,23 @@ export default {
             cntr.conflict = [];
             let voyKey = cntr.vscd + "/" + cntr.vsvy + "-" + cntr.vsdr;
             cntr.isIgnore = me.voyNoSel.has(voyKey) || cntr.vsdr == "I"; //标记忽略
+            //计算延时
+            cntr.isDelay = false;
+            let eff = me.getEfficent(cntr);
+            if (eff < 0) {
+              throw StopIteration;
+            }
+            cntr.opDate = new Date(
+              preTime.setSeconds(preTime.getSeconds() + eff * 60)
+            );
+            //如有设置延时，设置延时必须大于计算延时，否则该设置延时无效。
             let dt = me.delay[cntr.key];
             if (dt) {
-              cntr.isDelay = true;
-              cntr.opDate = new Date(dt);
-              preTime = new Date(dt);
-            } else {
-              cntr.isDelay = false;
-              let eff = me.getEfficent(cntr);
-              if (eff < 0) {
-                throw StopIteration;
+              if (new Date(dt) > preTime) {
+                cntr.isDelay = true;
+                cntr.opDate = new Date(dt);
+                preTime = new Date(dt);
               }
-              cntr.opDate = new Date(
-                //preTime.setMinutes(preTime.getMinutes() + L.C.common_eff)
-                preTime.setSeconds(preTime.getSeconds() + eff * 60)
-              );
             }
           });
         });
