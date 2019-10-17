@@ -347,7 +347,7 @@ function drawScale(stage, layer, qd, scaleItem, type, showDelayDialog) {
           shape.attrs.stroke = "#ff2525";
           shape.attrs.strokeWidth = 1;
           cntrInfo(stage, layer, cir_x, cir_y, cntr, true);
-          layer.draw();
+          layer.batchDraw();
         })
         .on("mouseout", function() {
           let shape =
@@ -357,7 +357,7 @@ function drawScale(stage, layer, qd, scaleItem, type, showDelayDialog) {
           shape.attrs.stroke = ring_color;
           shape.attrs.strokeWidth = 1;
           cntrInfo(stage, layer, cir_x, cir_y, cntr, false);
-          layer.draw();
+          layer.batchDraw();
         })
         .on("click", () => showDelayDialog(cntr));
       dx += C.cntr_interval;

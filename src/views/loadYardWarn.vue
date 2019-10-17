@@ -359,7 +359,7 @@ export default {
           drawIndex += 1;
         }
       });
-      me.layer.draw();
+      me.layer.batchDraw();
     },
     //计算激活的装卸时间点，同时计算延时
     calculateTime() {
