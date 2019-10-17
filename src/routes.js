@@ -68,7 +68,7 @@ let routes = [{
     leaf: true,
     children: [
         {
-            path: '/lyw', component: Lyw, name: '装船场地拥堵'
+            path: '/lyw', component: Lyw, name: '装船场地拥堵预警'
         }
     ]
 },
