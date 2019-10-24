@@ -28,6 +28,20 @@ const C = {
       label: "12小时"
     }
   ],
+  yard_statistic_options: [
+    {
+      value: 0.5,
+      label: "0.5小时"
+    },
+    {
+      value: 1,
+      label: "1小时"
+    },
+    {
+      value: 2,
+      label: "2小时"
+    }
+  ],
   show_type: {
     //分类表示
     circle: "circle",

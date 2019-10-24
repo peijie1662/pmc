@@ -9,6 +9,7 @@
       >+ CWP</el-button>
       <el-button size="mini" @click="showEfficent" style="margin-left:5px;width:100px;">效率</el-button>
       <el-button size="mini" @click="showConflict" style="margin-left:5px;width:100px;">冲突</el-button>
+      <!-- 时间长度下拉框 -->
       <el-select
         v-model="timeline_length"
         size="mini"
@@ -22,6 +23,24 @@
           :value="item.value"
         ></el-option>
       </el-select>
+      <el-button size="mini" icon="el-icon-upload2" @click="saveSetting" style="margin-left:20px;"></el-button>
+      <!-- 设置列表下拉框 -->
+      <el-select
+        v-model="settingSel"
+        @visible-change="getSettingList"
+        size="mini"
+        style="width:100px;margin-left:10px;"
+      >
+        <el-option
+          v-for="item in settingList"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+        ></el-option>
+      </el-select>
+      <el-button size="mini" icon="el-icon-download" @click="getSetting" style="margin-left:0;"></el-button>
+      <el-button size="mini" icon="el-icon-document" @click="showStatistic" style="margin-left:0;"></el-button>
+      <!-- 显示切换 -->
       <el-radio-group v-model="showType" size="mini" @change="mainfun" style="margin-left:30px;">
         <el-radio-button label="circle">简图</el-radio-button>
         <el-radio-button label="cwp_rect">CWP</el-radio-button>
@@ -80,20 +99,35 @@
     <el-dialog title="冲突设置" :visible.sync="conflictDialogVisible">
       <Conflict :conflict="newConflict" @conflictChange="conflictChange"></Conflict>
     </el-dialog>
+    <!-- 堆场统计窗口 -->
+    <el-dialog title="堆场装船统计" :visible.sync="yardStatisticVisible">
+      <yard-statistic :aqs="statisticAqs"></yard-statistic>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getLywQds, getLywActiveQueues, getLywPendingCntrs } from "../api/api";
+import {
+  getLywQds,
+  getLywActiveQueues,
+  getLywPendingCntrs,
+  addSetting,
+  getSetting,
+  getSettingList
+} from "../api/api";
 import GB from "../global.vue";
 import L from "../LywUtils.vue";
 import AddCwp from "./addCwpComponent.vue";
 import Efficent from "./qdEfficent.vue";
 import Conflict from "./conflictSet.vue";
+import YardStatistic from "./yardStatistic.vue";
 
 export default {
   data() {
     return {
+      settingSel: "",
+      settingList: [],
+      //
       stage: null,
       layer: null,
       hideIm: true,
@@ -119,13 +153,126 @@ export default {
       qdEfficents: [], //效率
       //
       conflict: L.C.default_conflict,
-      newConflict: "", //传递给窗口的conflict
+      newConflict: "", //传递给冲突窗口的conflict
       conflictDialogVisible: false,
       //
-      showType: L.C.show_type.circle
+      statisticAqs: [], //传递给统计窗口的aqs
+      yardStatisticVisible: false,
+      //
+      showType: L.C.show_type.circle,
+      userId: "",
+      qdCwps: []
     };
   },
   methods: {
+    getSettingList(flag) {
+      let me = this;
+      if (flag) {
+        getSettingList({})
+          .then(res => {
+            let { flag, data, errMsg } = res;
+            if (flag) {
+              me.settingList = data.map(item => {
+                return {
+                  label: item,
+                  value: item
+                };
+              });
+            } else {
+              me.$message.error(errMsg);
+            }
+          })
+          .catch(err => {
+            me.$message.error(err);
+          });
+      }
+    },
+    getSetting() {
+      let me = this;
+      if (GB.isEmpty(me.settingSel)) {
+        me.$message.warning("请先选择要使用的设置参数");
+        return;
+      }
+      getSetting({
+        userId: me.settingSel
+      })
+        .then(res => {
+          let { flag, data, errMsg } = res;
+          if (flag) {
+            //1.同步冲突
+            me.conflict = data.conflict;
+            localStorage.setItem("conflict", JSON.stringify(me.conflict));
+            //2.同步效率
+            me.qdEfficents = data.efficents;
+            localStorage.setItem(
+              "efficents",
+              JSON.stringify(me.qdEfficents)
+            );
+            //3.同步延后
+            me.delay = data.delay;
+            sessionStorage.setItem("delay", JSON.stringify(me.delay));
+            //4.同步忽略
+            me.voyNoSel = new Set();
+            if (data.voyNoSel) {
+              if (data.voyNoSel.length > 0) {
+                me.voyNoSel = new Set(JSON.parse(data.voyNoSel));
+              }
+            }
+            sessionStorage.setItem(
+              "voyNoSel",
+              JSON.stringify([...me.voyNoSel.values()])
+            );
+            //刷新数据，从数据库从新载入
+            me.init();
+            Promise.all([me.loadQds(), me.loadLywActiveQueues()])
+              .then(res => {
+                //5.同步PendingCwp
+                if (data.qdCwps) {
+                  me.qdCwps = data.qdCwps;
+                  sessionStorage.setItem("qdCwps", JSON.stringify(me.qdCwps));
+                  me.addQdPendingCwps();
+                } else {
+                  me.mainfun();
+                }
+                me.$message.success("使用" + me.settingSel + "的设置刷新完毕");
+              })
+              .catch(err => {
+                me.$message.error(err);
+              });
+          } else {
+            me.$message.error(errMsg);
+          }
+        })
+        .catch(err => {
+          me.$message.error(err);
+        });
+    },
+    saveSetting() {
+      let me = this;
+      let lywSetting = {
+        conflict: me.conflict,
+        efficents: me.qdEfficents,
+        delay: me.delay,
+        voyNoSel: me.voyNoSel,
+        qdCwps: me.qdCwps
+      };
+      let params = {
+        userId: me.userId,
+        setting: JSON.stringify(lywSetting)
+      };
+      addSetting(params)
+        .then(res => {
+          let { flag, data, errMsg } = res;
+          if (flag) {
+            me.$message.success("上传设置成功");
+          } else {
+            me.$message.error(errMsg);
+          }
+        })
+        .catch(err => {
+          me.$message.error(err);
+        });
+    },
     getEfficent(cntr) {
       let me = this;
       //1.找到效率设置
@@ -189,6 +336,11 @@ export default {
         me.mainfun();
       }
     },
+    showStatistic() {
+      let me = this;
+      me.statisticAqs = [...me.activeQueues];
+      me.yardStatisticVisible = true;
+    },
     showConflict() {
       let me = this;
       me.newConflict = { ...me.conflict };
@@ -201,6 +353,7 @@ export default {
     },
     addQdPendingCwps(qdCwps) {
       let me = this;
+      me.qdCwps = JSON.parse(sessionStorage.getItem("qdCwps"));
       //追加前删除所有追加项，否则会重复。
       me.activeQueues.forEach(aq => {
         aq.queue = aq.queue.filter(c => {
@@ -208,9 +361,9 @@ export default {
         });
       });
       //开始追加
-      if (qdCwps) {
+      if (me.qdCwps) {
         let ps = [];
-        qdCwps.forEach(qd => {
+        me.qdCwps.forEach(qd => {
           if (qd.pendingCwps.length > 0) {
             let p = new Promise((resolve, reject) => {
               getLywPendingCntrs(qd.pendingCwps).then(res => {
@@ -258,6 +411,8 @@ export default {
           //可能是清除操作，也需要重绘
           me.mainfun();
         }
+      } else {
+        me.mainfun();
       }
       me.cwpDialogVisible = false;
     },
@@ -548,7 +703,7 @@ export default {
                   me.activeQueues.push({ qdno: qd.qdno, queue: data[qd.qdno] });
                 }
               });
-              me.mainfun();
+              //me.mainfun();
               resolve(data);
             } else {
               reject(errMsg);
@@ -571,6 +726,11 @@ export default {
   },
   mounted() {
     let me = this;
+    //0.用户
+    let userinfo = JSON.parse(sessionStorage.getItem("userinfo"));
+    if (userinfo) {
+      me.userId = userinfo.userid;
+    }
     //1.保存的冲突
     let conflict = JSON.parse(localStorage.getItem("conflict"));
     if (conflict) {
@@ -594,10 +754,17 @@ export default {
         me.voyNoSel = new Set(JSON.parse(voyNoSel));
       }
     }
-    //5.读数据
+    //5.保存的CWP
+    let qdCwps = sessionStorage.getItem("qdCwps");
+    if (qdCwps) {
+      me.qdCwps = JSON.parse(qdCwps);
+    }
+    //6.读数据
     me.init();
     Promise.all([me.loadQds(), me.loadLywActiveQueues()])
-      .then()
+      .then(res => {
+        me.addQdPendingCwps();
+      })
       .catch(err => {
         console.info(err);
       });
@@ -605,7 +772,8 @@ export default {
   components: {
     AddCwp,
     Efficent,
-    Conflict
+    Conflict,
+    YardStatistic
   }
 };
 </script>

@@ -11,8 +11,11 @@ export const getYP = params => {return axios.post(`${base}/vessels/yp`,params).t
 export const getYB = params => {return axios.post(`${base}/vessels/yb`,params).then(res => res.data);};
 export const getZyqk = params => {return axios.post(`${base}/vessels/zyqk`,params).then(res => res.data);};
 
-//装船堆场PA预警
+//装船堆场拥堵预警
 export const getLywQds = params => {return axios.post(`${base}/lyw/qds`,params).then(res => res.data);};
 export const getLywActiveQueues = params => {return axios.post(`${base}/lyw/activequeues`,params).then(res => res.data);};
 export const getLywPendingCwps = params => {return axios.post(`${base}/lyw/pendingcwps`,params).then(res => res.data);};
 export const getLywPendingCntrs = params => {return axios.post(`${base}/lyw/pendingcntrs`,params).then(res => res.data);};
+export const addSetting = params => {return axios.post(`${base}/lyw/addsetting`,params).then(res => res.data);};
+export const getSetting = params => {return axios.post(`${base}/lyw/getsetting`,params).then(res => res.data);};
+export const getSettingList = params => {return axios.post(`${base}/lyw/getsettinglist`,params).then(res => res.data);};

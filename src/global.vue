@@ -158,6 +158,46 @@ function formatDate(date, fmt) {
   return fmt;
 }
 
+function groupBy(list, fn) {
+  const groups = new Map();
+  list.forEach(function(o) {
+    const group = JSON.stringify(fn(o));
+    //groups[group] = groups[group] || [];
+    //groups[group].push(o);
+    groups.set(group, groups.get(group) || []);
+    groups.get(group).push(o);
+  });
+  return groups;
+}
+
+function compareUp(prop) {
+  return function(obj1, obj2) {
+    var val1 = obj1[prop];
+    var val2 = obj2[prop];
+    if (val1 < val2) {
+      return -1;
+    } else if (val1 > val2) {
+      return 1;
+    } else {
+      return 0;
+    }
+  };
+}
+
+function compareDown(prop) {
+  return function(obj1, obj2) {
+    var val1 = obj1[prop];
+    var val2 = obj2[prop];
+    if (val1 > val2) {
+      return -1;
+    } else if (val1 < val2) {
+      return 1;
+    } else {
+      return 0;
+    }
+  };
+}
+
 export default {
   srvurl,
   //字符串函数
@@ -180,5 +220,8 @@ export default {
   formatDate,
   //其它函数
   downloadURI,
+  groupBy,
+  compareUp,
+  compareDown
 };
 </script>

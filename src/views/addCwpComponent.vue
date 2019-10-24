@@ -130,6 +130,7 @@ export default {
     },
     cwpsOk() {
       let me = this;
+      sessionStorage.setItem("qdCwps",JSON.stringify(me.qdCwps))
       me.$emit("addQdPendingCwps", me.qdCwps);
     },
     cwpsCancel() {
