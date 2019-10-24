@@ -33,13 +33,13 @@
           <el-checkbox-button v-for="bay in bayList" :label="bay.blab" :key="bay.blab"></el-checkbox-button>
         </el-checkbox-group>
       </div>
-      <div ref="exbay"></div>
+      <div ref="imbay"></div>
     </div>
   </div>
 </template>
 
 <script>
-import GB from "../global.vue";
+import GB from "@/global.vue";
 
 const width = 1200; //舞台宽度
 const height = 3000; //舞台高度
@@ -62,7 +62,7 @@ export default {
   props: ["blist"],
   watch: {
     blist(val) {
-      this.bayList = val;
+      this.bayList = val; //这里调用贝列表显示
     }
   },
   methods: {
@@ -90,7 +90,7 @@ export default {
     },
     disBays() {
       let me = this;
-      let c = me.$refs.exbay;
+      let c = me.$refs.imbay;
       let stage = new Konva.Stage({
         container: c,
         width: width,
@@ -170,7 +170,7 @@ export default {
           let cx = boutleft + binleft + side * c.cl; //left
           let cy = bouttop + bintop + (bel - (c.el + 1)) * side; //top
           let rect = new Konva.Rect({
-            id: c.cl + "-" + c.el,
+            //id: c.cl + "-" + c.el,
             x: cx + 0.5 + offsetx,
             y: cy + 0.5 + offsety,
             width: side,
@@ -271,9 +271,8 @@ export default {
           offsetx += bw;
         }
       });
-      layer.scale({ x: this.scaleVal / 100, y: this.scaleVal / 100 });
+      layer.scale({ x: me.scaleVal / 100, y: me.scaleVal / 100 });
       layer.draw();
-      //this.$emit('sizeChgEvent', offsety); //将消息传回父组件
     },
     rv(val) {
       return (val * this.scaleVal) / 100;
@@ -283,11 +282,11 @@ export default {
     let me = this;
     me.bayList = null;
     me.baySelList = null;
-    me.$refs.exbay = null;
+    me.$refs.imbay = null;
   }
 };
 </script>
 
-<style>
+<style scoped>
 </style>
 

@@ -62,14 +62,14 @@
 </template>
 
 <script>
-import ImportBayCom from "./importBayComponent.vue";
-import ExportBayCom from "./exportBayComponent.vue";
-import ImportMiniCom from "./importMiniComponent.vue";
-import ExportMiniCom from "./exportMiniComponent.vue";
-import { getImportBays, getExportBays, getYP } from "../api/api";
-import GB from "../global.vue";
-import V from "../VesselUtils.vue";
-import TB from "./timeButtomComponent.vue";
+import ImportBayCom from "./importBayComponent";
+import ExportBayCom from "./exportBayComponent";
+import ImportMiniCom from "./importMiniComponent";
+import ExportMiniCom from "./exportMiniComponent"
+import { getImportBays, getExportBays, getYP } from "@/api/api";
+import GB from "@/global";
+import V from "./VesselUtils";
+import TB from "./timeButtomComponent";
 
 export default {
   data() {

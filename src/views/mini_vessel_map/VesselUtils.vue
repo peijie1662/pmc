@@ -1,5 +1,5 @@
 <script>
-import GB from "./global.vue";
+import GB from "@/global.vue";
 //建立船舶模型的工具类
 
 const MyFontFamily = "CCXYT";

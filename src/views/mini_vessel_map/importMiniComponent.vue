@@ -20,21 +20,19 @@
         <el-button size="mini" style="margin-left:5px;" @click="findCntr">查找</el-button>
       </div>
       <!-- 显示模式 -->
-      <div class="header-block" style="width:320px;">
+      <div class="header-block" style="width:200px;">
         <el-radio-group
           v-model="showType"
           size="small"
           style="margin-left:20px;"
           @change="showTypeChange"
         >
-          <el-radio-button label="PORT"></el-radio-button>
+          <el-radio-button label="TYPE"></el-radio-button>
           <el-radio-button label="CWP"></el-radio-button>
-          <el-radio-button label="YARD"></el-radio-button>
-          <el-radio-button label="SEGMENT"></el-radio-button>
         </el-radio-group>
       </div>
     </div>
-    <div ref="exportMini" style="margin-top:10px;border:1px solid #20a0ff;"></div>
+    <div ref="importMini" style="margin-top:10px;border:1px solid #20a0ff;"></div>
     <!-- 单箱信息 -->
     <cntr-info :cntr="dialogCntr"></cntr-info>
     <!-- 颜色编辑框 -->
@@ -71,7 +69,7 @@
   float: left;
   margin-left: 5px;
   height: 95%;
-  width: 360px;
+  width: 300px;
   border: 1px dashed #20a0ff;
   border-radius: 2px;
   line-height: 50px;
@@ -94,8 +92,8 @@
 </style>
 
 <script>
-import GB from "../global.vue";
-import V from "../VesselUtils.vue";
+import GB from "@/global.vue";
+import V from "./VesselUtils.vue";
 import CntrInfo from "./cntrInfoComponent.vue";
 
 const a4_width = 1200;
@@ -112,10 +110,32 @@ const ori_side = 5; //原始边长
 export default {
   data() {
     return {
-      showType: "PORT", //显示类型
+      showType: "TYPE", //显示类型
       isSubWindowShow: true,
       subWindowData: [],
       curCwp: [], //选中的CWP
+      cntrTypes: [
+        {
+          label: "进空",
+          color: "#FFD772"
+        },
+        {
+          label: "中空",
+          color: "#B848FF"
+        },
+        {
+          label: "进重",
+          color: "#FF0000"
+        },
+        {
+          label: "中重",
+          color: "#3a95ff"
+        },
+        {
+          label: "倒箱",
+          color: "#FFFFFF"
+        }
+      ],
       width: a4_width,
       height: a4_height,
       stage: null, //舞台
@@ -125,8 +145,6 @@ export default {
       pageType: "A4",
       liveHatch: 0, //生活舱
       hatchs: [], //舱列表
-      bays: [], //贝列表
-      ports: [], //港口列表
       qds: [], //桥吊列表
       cwps: [] //CWP列表
     };
@@ -134,12 +152,12 @@ export default {
   methods: {
     colorChange(label, color) {
       let me = this;
-      if (me.showType == "PORT") {
-        me.ports = me.ports.map(function(port) {
-          if (port.port == label) {
-            port.color = color;
+      if (me.showType == "TYPE") {
+        me.cntrTypes = me.cntrTypes.map(function(type) {
+          if (type.label == label) {
+            type.color = color;
           }
-          return port;
+          return type;
         });
       }
       if (me.showType == "CWP") {
@@ -156,10 +174,8 @@ export default {
     showTypeChange() {
       let me = this;
       if (me.layer) {
-        if (me.showType == "PORT") {
-          me.subWindowData = me.ports.map(function(port) {
-            return { label: port.port, color: port.color };
-          });
+        if (me.showType == "TYPE") {
+          me.subWindowData = me.cntrTypes;
         }
         if (me.showType == "CWP") {
           me.subWindowData = me.qds.map(function(qd) {
@@ -169,11 +185,11 @@ export default {
         me.hatchs.forEach(function(hatch) {
           hatch.bays.forEach(function(bay) {
             bay.cells.forEach(function(cell) {
-              V.setExportCntrColor(cell, {
+              V.setImportCntrColor(cell, {
                 showType: me.showType,
                 curCwp: me.curCwp,
                 qds: me.qds,
-                ports: me.ports
+                cntrTypes: me.cntrTypes
               });
               if (cell.group) {
                 cell.group.children.forEach(function(c) {
@@ -185,7 +201,7 @@ export default {
             });
           });
         });
-        me.layer.batchDraw();
+        me.layer.draw();
       }
       me = null;
     },
@@ -214,7 +230,11 @@ export default {
           strokeWidth: 1
         });
         layer.add(circle);
-        layer.batchDraw();
+        layer.move({
+          x: -0.5,
+          y: 0.5
+        });
+        layer.draw();
         circle.to({
           offset: {
             x,
@@ -238,7 +258,7 @@ export default {
     },
     pageSizeChange() {
       let me = this;
-      if (this.pageType == "A4") {
+      if (me.pageType == "A4") {
         me.width = a4_width;
         me.height = a4_height;
       } else if (this.pageType == "A3") {
@@ -250,8 +270,6 @@ export default {
     },
     rcv(val) {
       this.hatchs = val.hatchs;
-      this.bays = val.bays;
-      this.ports = val.ports;
       this.qds = val.qds;
       this.cwps = val.cwps;
       this.liveHatch = val.liveHatch;
@@ -263,7 +281,7 @@ export default {
       this.compeleteDestroy();
       let width = this.width;
       let height = this.height;
-      let c = this.$refs.exportMini;
+      let c = this.$refs.importMini;
       this.stage = new Konva.Stage({
         container: c,
         width,
@@ -307,16 +325,18 @@ export default {
         return r;
       };
       //1.确定贝参数
-      this.bays.forEach(function(bay) {
-        if (bay.cl > max_cl) {
-          max_cl = bay.cl;
-        }
-        if (bay.dh == "H" && bay.el > max_h_el) {
-          max_h_el = bay.el;
-        }
-        if (bay.dh == "D" && bay.el > max_d_el) {
-          max_d_el = bay.el;
-        }
+      this.hatchs.forEach(function(hatch) {
+        hatch.bays.forEach(function(bay) {
+          if (bay.cl > max_cl) {
+            max_cl = bay.cl;
+          }
+          if (bay.dh == "H" && bay.el > max_h_el) {
+            max_h_el = bay.el;
+          }
+          if (bay.dh == "D" && bay.el > max_d_el) {
+            max_d_el = bay.el;
+          }
+        });
       });
       //2.不断增加side,寻找最大可用side
       let side = 0;
@@ -347,6 +367,8 @@ export default {
         }
       }
       side -= 1;
+      //确定贝标签字体大小
+      let labFontSize = V.getFonSizeByCell(side);
       //3.使用合适的side确定舱位矩形
       hatchw = max_cl * side + 45;
       hatchh = (max_d_el + max_h_el) * side + 60;
@@ -408,7 +430,6 @@ export default {
         if (!GB.isEmpty(hatch.fRect)) {
           //1.1甲板
           let lab = V.getHatchLab(hatch, "F");
-          let fz = V.getFonSizeByCell(side);
           let hatchLab = new Konva.Text({
             x: hatch.fRect.attrs.x + midx - 5,
             y: hatch.fRect.attrs.y + 2,
@@ -435,24 +456,22 @@ export default {
               cell["notBalance"] = GB.isEmpty(
                 V.findPartnerCell(cell, partnerBay)
               );
-              if (fatherBay) {
-                cell["isPlaceHolder"] =
-                  !GB.isEmpty(V.findPartnerCntr(cell, fatherBay)) &&
-                  bay.getPC() == "C";
-              }
-              V.drawExportMiniCell(cell, {
+              cell["isPlaceHolder"] =
+                !GB.isEmpty(V.findPartnerCntr(cell, fatherBay)) &&
+                bay.getPC() == "C";
+              V.drawImportMiniCell(cell, {
                 showType: me.showType,
                 qds: me.qds,
-                ports: me.ports,
+                cntrTypes: me.cntrTypes,
                 curCwp: me.curCwp
               });
             });
             V.drawBayLab(layer, bay, hatch.fRect, {
-              sideSpan,
-              side,
-              midy,
-              max_d_el,
-              max_h_el
+              sideSpan: sideSpan,
+              side: side,
+              midy: midy,
+              max_d_el: max_d_el,
+              max_h_el: max_h_el
             });
           }
           //1.2舱内
@@ -481,10 +500,10 @@ export default {
               cell["isPlaceHolder"] =
                 !GB.isEmpty(V.findPartnerCntr(cell, fatherBay)) &&
                 bay.getPC() == "C";
-              V.drawExportMiniCell(cell, {
+              V.drawImportMiniCell(cell, {
                 showType: me.showType,
                 qds: me.qds,
-                ports: me.ports,
+                cntrTypes: me.cntrTypes,
                 curCwp: me.curCwp
               });
             });
@@ -503,13 +522,13 @@ export default {
             hatchw,
             max_cl,
             hatchSummary,
-            fa: "F"
+            fa:"F"
           });
         }
         //2.父后舱
         if (!GB.isEmpty(hatch.paRect)) {
           let lab = V.getHatchLab(hatch, "PA");
-          let fz = V.getFonSizeByCell(side);
+          let fz = V.labFontSize;
           let hatchLab = new Konva.Text({
             x: hatch.paRect.attrs.x + midx - 5,
             y: hatch.paRect.attrs.y + 2,
@@ -542,10 +561,10 @@ export default {
                 V.findPartnerCell(cell, fatherBay)
               );
               cell["isPlaceHolder"] = false;
-              V.drawExportMiniCell(cell, {
+              V.drawImportMiniCell(cell, {
                 showType: me.showType,
                 qds: me.qds,
-                ports: me.ports,
+                cntrTypes: me.cntrTypes,
                 curCwp: me.curCwp
               });
             });
@@ -574,10 +593,10 @@ export default {
                 });
                 cell["notBalance"] = false;
                 cell["isPlaceHolder"] = false;
-                V.drawExportMiniCell(cell, {
+                V.drawImportMiniCell(cell, {
                   showType: me.showType,
                   qds: me.qds,
-                  ports: me.ports,
+                  cntrTypes: me.cntrTypes,
                   curCwp: me.curCwp
                 });
               });
@@ -618,10 +637,10 @@ export default {
                 V.findPartnerCell(cell, fatherBay)
               );
               cell["isPlaceHolder"] = false;
-              V.drawExportMiniCell(cell, {
+              V.drawImportMiniCell(cell, {
                 showType: me.showType,
                 qds: me.qds,
-                ports: me.ports,
+                cntrTypes: me.cntrTypes,
                 curCwp: me.curCwp
               });
             });
@@ -654,10 +673,10 @@ export default {
                 });
                 cell["notBalance"] = false;
                 cell["isPlaceHolder"] = false;
-                V.drawExportMiniCell(cell, {
+                V.drawImportMiniCell(cell, {
                   showType: me.showType,
                   qds: me.qds,
-                  ports: me.ports,
+                  cntrTypes: me.cntrTypes,
                   curCwp: me.curCwp
                 });
               });
@@ -677,7 +696,7 @@ export default {
             hatchw,
             max_cl,
             hatchSummary,
-            fa: "A"
+            fa:"A"
           });
           //2.4舱盖板
           V.drawCover(layer, hatch, "F", midy);
@@ -725,7 +744,7 @@ export default {
         x: -0.5,
         y: 0.5
       });
-      layer.batchDraw();
+      layer.draw();
       me = null;
     },
     compeleteDestroy() {
@@ -754,7 +773,7 @@ export default {
         this.stage.destroy();
         this.layer = null;
         this.stage = null;
-        console.log("exportMini release");
+        console.log("importMini release");
       }
     }
   },
@@ -762,22 +781,20 @@ export default {
     CntrInfo
   },
   mounted() {
-    console.log("exMini mounted");
+    console.log("imMini mounted");
   },
   deactivated() {
-    console.log("exMini deactivated");
+    console.log("imMini deactivated");
   },
   beforeDestroy() {
     this.compeleteDestroy();
     this.findingCntr = null;
     this.dialogCntr = null;
     this.hatchs = null;
-    this.bays = null;
-    this.ports = null;
-    console.log("exMini beforeDestroy");
+    console.log("imMini beforeDestroy");
   },
   destroyed() {
-    console.log("exMini destroyed");
+    console.log("imMini destroyed");
   }
 };
 </script>
