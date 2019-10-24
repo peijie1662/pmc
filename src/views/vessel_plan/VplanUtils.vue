@@ -1,5 +1,5 @@
 <script>
-import GB from "./global.vue";
+import GB from "@/global.vue";
 
 var Constant = (function() {
   // Private static attributes.

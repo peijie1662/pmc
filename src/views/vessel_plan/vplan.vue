@@ -119,9 +119,9 @@
 }
 </style>
 <script>
-import GB from "../global.vue";
-import V from "../VplanUtils.vue";
-import { getYP, getYB } from "../api/api";
+import GB from "@/global.vue";
+import V from "./VplanUtils.vue";
+import { getYP, getYB } from "@/api/api";
 import jsPDF from 'jspdf';
 
 export default {

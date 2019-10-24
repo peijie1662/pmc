@@ -139,8 +139,8 @@
 
 <script>
 import WatchRange from "./zyqkComponent.vue";
-import GB from "../global.vue";
-import { getYP, getZyqk } from "../api/api";
+import GB from "@/global.vue";
+import { getYP, getZyqk } from "@/api/api";
 
 export default {
   data() {

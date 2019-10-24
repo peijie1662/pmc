@@ -2,8 +2,8 @@ import Login from './views/login.vue'
 import Home from './views/home.vue'
 import NotFound from './404.vue'
 import PzInfo from './views/mini_vessel_map/pzInfo.vue'
-import VplanInfo from './views/vplan.vue'
-import ZyqkInfo from './views/zyqk.vue'
+import VplanInfo from './views/vessel_plan/vplan.vue'
+import ZyqkInfo from './views/real_time_monitoring/zyqk.vue'
 import Lyw from './views/load_yard_warn/loadYardWarn.vue'
 
 let routes = [{ 
