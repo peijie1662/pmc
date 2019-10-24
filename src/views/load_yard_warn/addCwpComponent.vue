@@ -64,7 +64,7 @@
 
 <script>
 import Vue from "vue";
-import { getLywPendingCwps } from "../api/api";
+import { getLywPendingCwps } from "@/api/api";
 import draggable from "vuedraggable";
 
 export default {

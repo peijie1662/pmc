@@ -1,5 +1,5 @@
 <script>
-import GB from "./global.vue";
+import GB from "@/global.vue";
 
 const C = {
   time_length: 12 * 60, //计算时间长度(时间柱长度)

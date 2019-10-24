@@ -37,8 +37,8 @@
 </template>
 
 <script>
-import GB from "../global.vue";
-import L from "../LywUtils.vue";
+import GB from "@/global.vue";
+import L from "./LywUtils.vue";
 
 export default {
   data() {

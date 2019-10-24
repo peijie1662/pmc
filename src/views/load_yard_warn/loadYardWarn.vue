@@ -114,9 +114,9 @@ import {
   addSetting,
   getSetting,
   getSettingList
-} from "../api/api";
-import GB from "../global.vue";
-import L from "../LywUtils.vue";
+} from "@/api/api";
+import GB from "@/global.vue";
+import L from "./LywUtils.vue";
 import AddCwp from "./addCwpComponent.vue";
 import Efficent from "./qdEfficent.vue";
 import Conflict from "./conflictSet.vue";
