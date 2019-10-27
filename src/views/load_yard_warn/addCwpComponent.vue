@@ -130,7 +130,7 @@ export default {
     },
     cwpsOk() {
       let me = this;
-      sessionStorage.setItem("qdCwps",JSON.stringify(me.qdCwps))
+      sessionStorage.setItem("qdCwps", JSON.stringify(me.qdCwps));
       me.$emit("addQdPendingCwps", me.qdCwps);
     },
     cwpsCancel() {
@@ -199,6 +199,11 @@ export default {
                   item.cwpn
               };
             });
+            //从存储中读取
+            let qdCwps = sessionStorage.getItem("qdCwps");
+            if (qdCwps) {
+              me.qdCwps = JSON.parse(qdCwps);
+            }
           } else {
             me.$message({
               message: errMsg,

@@ -25,7 +25,7 @@
     </div>
     <div class="section" style="margin-top:10px;">
       <div v-for="(bayGp,index) in selYardGp.cntrs" :key="index" class="bay">
-        <b>{{bayGp.bay}}</b>
+        <b>{{selYardGp.yard}} - {{bayGp.bay}}</b>
         ({{bayGp.cntrs.length}})
         <div v-for="(cntr,index) in bayGp.cntrs" :key="index" style="overflow:hidden;">
           <span style="float:left;margin-left:5px;">{{cntr.cntrId}}</span>
@@ -53,7 +53,7 @@ export default {
   watch: {
     aqs: {
       handler(newValue, oldValue) {
-        this.selYardGp = ""; 
+        this.selYardGp = "";
         this.newStatistic();
       },
       immediate: true
@@ -76,7 +76,7 @@ export default {
       let sd = new Date();
       sd.setMinutes(sd.getMinutes() + me.timeline_length * 60);
       let finQueue = singleQueue.filter(item => {
-        return item.opDate <= sd && !item.isIgnore;
+        return item.opDate <= sd && !item.isIgnore && item.jbst != "L1";
       });
       //3.按场地分组，并排序
       let group = GB.groupBy(finQueue, item => {
@@ -138,6 +138,11 @@ export default {
   margin: 10px;
   text-align: center;
   line-height: 50px;
+  cursor: pointer;
+}
+.yard:hover {
+  background: yellow;
+  color: blue;
 }
 .bay {
   width: 200px;

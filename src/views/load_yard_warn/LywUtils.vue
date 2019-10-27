@@ -166,7 +166,7 @@ function cntrInfo(stage, layer, x, y, cntr, visible) {
       new Konva.Text({
         x: left + 5,
         y: top + 45,
-        text: "箱号 --- " + cntr.cntrId,
+        text: "箱号 --- " + cntr.cntrId + "   状态 --- " + cntr.jbst,
         fontSize: 12,
         fontFamily: "Calibri",
         fill: "#000"
@@ -258,9 +258,12 @@ function drawScale(stage, layer, qd, scaleItem, type, showDelayDialog) {
       let content_color = "#20a0ff";
       if (cntr.jbst == "PD") {
         content_color = "yellow";
-      }
+      } 
       if (cntr.isIgnore) {
         content_color = "#dee1e6";
+      }
+      if (cntr.jbst == "L1") {
+        content_color = "#00ff00";
       }
       //冲突颜色
       if (cntr.isConflict) {

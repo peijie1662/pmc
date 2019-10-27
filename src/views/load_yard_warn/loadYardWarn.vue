@@ -5,10 +5,10 @@
       <el-button
         size="mini"
         @click="cwpDialogVisible = true"
-        style="margin-left:50px;width:100px;"
+        style="margin-left:30px;width:80px;"
       >+ CWP</el-button>
-      <el-button size="mini" @click="showEfficent" style="margin-left:5px;width:100px;">效率</el-button>
-      <el-button size="mini" @click="showConflict" style="margin-left:5px;width:100px;">冲突</el-button>
+      <el-button size="mini" @click="showEfficent" style="margin-left:0;width:60px;">效率</el-button>
+      <el-button size="mini" @click="showConflict" style="margin-left:0;width:60px;">冲突</el-button>
       <!-- 时间长度下拉框 -->
       <el-select
         v-model="timeline_length"
@@ -204,10 +204,7 @@ export default {
             localStorage.setItem("conflict", JSON.stringify(me.conflict));
             //2.同步效率
             me.qdEfficents = data.efficents;
-            localStorage.setItem(
-              "efficents",
-              JSON.stringify(me.qdEfficents)
-            );
+            localStorage.setItem("efficents", JSON.stringify(me.qdEfficents));
             //3.同步延后
             me.delay = data.delay;
             sessionStorage.setItem("delay", JSON.stringify(me.delay));
@@ -516,7 +513,7 @@ export default {
       });
       me.layer.batchDraw();
     },
-    //计算激活的装卸时间点，同时计算延时
+    //计算激活的装卸时间点，标记忽略，同时计算延时
     calculateTime() {
       let me = this;
       let StopIteration = new Error("StopIteration");
@@ -528,7 +525,9 @@ export default {
             cntr.isVesselLast = false;
             cntr.conflict = [];
             let voyKey = cntr.vscd + "/" + cntr.vsvy + "-" + cntr.vsdr;
-            cntr.isIgnore = me.voyNoSel.has(voyKey) || cntr.vsdr == "I"; //标记忽略
+            //标记忽略
+            cntr.isIgnore =
+              me.voyNoSel.has(voyKey) || cntr.vsdr == "I" || cntr.jbst == "L1";
             //计算延时
             cntr.isDelay = false;
             let eff = me.getEfficent(cntr);
@@ -568,7 +567,7 @@ export default {
         }
       });
     },
-    //激活队列转为可绘制队列
+    //激活队列计算冲突，转为可绘制队列
     convertDrawQueues() {
       let me = this;
       let curTime = new Date();
