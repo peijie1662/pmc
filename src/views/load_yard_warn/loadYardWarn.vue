@@ -40,6 +40,12 @@
       </el-select>
       <el-button size="mini" icon="el-icon-download" @click="getSetting" style="margin-left:0;"></el-button>
       <el-button size="mini" icon="el-icon-document" @click="showStatistic" style="margin-left:0;"></el-button>
+      <el-button
+        size="mini"
+        icon="el-icon-picture-outline"
+        @click="saveToPicture"
+        style="margin-left:0;"
+      ></el-button>
       <!-- 显示切换 -->
       <el-radio-group v-model="showType" size="mini" @change="mainfun" style="margin-left:30px;">
         <el-radio-button label="circle">简图</el-radio-button>
@@ -122,6 +128,8 @@ import Efficent from "./qdEfficent.vue";
 import Conflict from "./conflictSet.vue";
 import YardStatistic from "./yardStatistic.vue";
 
+function downloadURI(uri, name) {}
+
 export default {
   data() {
     return {
@@ -165,6 +173,15 @@ export default {
     };
   },
   methods: {
+    saveToPicture() {
+      let uri = this.stage.toDataURL({ pixelRatio: 2 });
+      let link = document.createElement("a");
+      link.download = GB.formatDate(new Date(), "yyyy/MM/dd_hh:mm:ss")+".png";
+      link.href = uri;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
     getSettingList(flag) {
       let me = this;
       if (flag) {

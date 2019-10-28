@@ -9,6 +9,15 @@
           <el-radio label="A3">A3</el-radio>
         </el-radio-group>
       </div>
+      <!-- 保存 -->
+      <div class="header-block" style="width:60px;">
+        <el-button
+          size="mini"
+          icon="el-icon-picture-outline"
+          @click="saveToPicture"
+          style="margin-left:10px;"
+        ></el-button>
+      </div>
       <!-- 找箱 -->
       <div class="header-block" style="width:250px;">
         <el-input
@@ -150,6 +159,15 @@ export default {
     };
   },
   methods: {
+    saveToPicture() {
+      let uri = this.stage.toDataURL({ pixelRatio: 5 });
+      let link = document.createElement("a");
+      link.download = GB.formatDate(new Date(), "yyyy/MM/dd_hh:mm:ss") + ".png";
+      link.href = uri;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
     colorChange(label, color) {
       let me = this;
       if (me.showType == "TYPE") {
@@ -522,7 +540,7 @@ export default {
             hatchw,
             max_cl,
             hatchSummary,
-            fa:"F"
+            fa: "F"
           });
         }
         //2.父后舱
@@ -696,7 +714,7 @@ export default {
             hatchw,
             max_cl,
             hatchSummary,
-            fa:"A"
+            fa: "A"
           });
           //2.4舱盖板
           V.drawCover(layer, hatch, "F", midy);
