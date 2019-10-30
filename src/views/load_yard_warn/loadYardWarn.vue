@@ -176,7 +176,7 @@ export default {
     saveToPicture() {
       let uri = this.stage.toDataURL({ pixelRatio: 2 });
       let link = document.createElement("a");
-      link.download = GB.formatDate(new Date(), "yyyy/MM/dd_hh:mm:ss")+".png";
+      link.download = GB.formatDate(new Date(), "yyyy/MM/dd_hh:mm:ss") + ".png";
       link.href = uri;
       document.body.appendChild(link);
       link.click();
@@ -563,6 +563,8 @@ export default {
                 preTime = new Date(dt);
               }
             }
+            //计算用
+            cntr.opInt = cntr.opDate.getTime();
           });
         });
       } catch (e) {
@@ -587,13 +589,49 @@ export default {
     //激活队列计算冲突，转为可绘制队列
     convertDrawQueues() {
       let me = this;
+      let calTime = new Date();
+      for (let i = 0; i <= L.C.time_length; i++) {
+        calTime.setMinutes(calTime.getMinutes() + 1);
+        let calInt = calTime.getTime();
+        //2.1找到潜在冲突集
+        let calCntrs = [];
+        me.activeQueues.forEach(item => {
+          let cs = item.queue.filter(cntr => {
+            return (
+              Math.abs(cntr.opInt - calInt) / 1000 / 60 <=
+                me.conflict.conflict_min / 2 && !cntr.isIgnore
+            );
+          });
+          calCntrs = calCntrs.concat(cs);
+        });
+        //2.2计算冲突
+        calCntrs.forEach(cntr => {
+          let conflict = calCntrs.filter(c => {
+            //单单 (a-b)/2， 单双或双双 (a-b)/2-1
+            let bay_interval = Math.abs(cntr.fmrw - c.fmrw) / 2;
+            if (cntr.fmrw % 2 == 0 || c.fmrw % 2 == 0) {
+              bay_interval -= 1;
+            }
+            return (
+              cntr.qdno != c.qdno &&
+              cntr.fmst == c.fmst &&
+              bay_interval <= me.conflict.conflict_bay_num
+            );
+          });
+          if (conflict.length > 0) {
+            cntr.isConflict = true;
+            cntr.conflict = conflict;
+          }
+        });
+      }
       let curTime = new Date();
+      let curInt = curTime.getTime();
       me.drawQueues = [];
-      me.activeQueues.forEach(item => {
+      me.activeQueues.forEach(aq => {
         //1.初始化桥吊下所有刻度
         let scaleTime = new Date();
         let newItem = {
-          qdno: item.qdno,
+          qdno: aq.qdno,
           isOnlyIm: true, //只有进口
           voys: [],
           scales: []
@@ -609,53 +647,18 @@ export default {
             cntrs: []
           });
         }
-        //2.计算冲突
-        let calTime = new Date();
-        for (let i = 0; i <= L.C.time_length; i++) {
-          calTime.setMinutes(calTime.getMinutes() + 1);
-          //2.1找到潜在冲突集
-          let calCntrs = [];
-          me.activeQueues.forEach(item => {
-            let cs = item.queue.filter(cntr => {
-              return (
-                Math.abs(cntr.opDate - calTime) / 1000 / 60 <=
-                  me.conflict.conflict_min / 2 && !cntr.isIgnore
-              );
-            });
-            calCntrs = calCntrs.concat(cs);
-          });
-          //2.2计算冲突
-          calCntrs.forEach(cntr => {
-            let conflict = calCntrs.filter(c => {
-              //单单 (a-b)/2， 单双或双双 (a-b)/2-1
-              let bay_interval = Math.abs(cntr.fmrw - c.fmrw) / 2;
-              if (cntr.fmrw % 2 == 0 || c.fmrw % 2 == 0) {
-                bay_interval -= 1;
-              }
-              return (
-                cntr.qdno != c.qdno &&
-                cntr.fmst == c.fmst &&
-                bay_interval <= me.conflict.conflict_bay_num
-              );
-            });
-            if (conflict.length > 0) {
-              cntr.isConflict = true;
-              cntr.conflict = conflict;
-            }
-          });
-        }
         //3.归并到刻度，并检查是否忽略
-        item.queue.forEach(cntr => {
+        aq.queue.forEach(cntr => {
           //归并
           let node = Math.round(
-            (cntr.opDate - curTime) / 1000 / 60 / L.C.scale_min
+            (cntr.opInt - curInt) / 1000 / 60 / L.C.scale_min
           );
           if (node <= maxScale) {
             newItem.scales[node].cntrs.push(cntr);
           }
         });
         //4.统计桥吊下航次
-        item.queue.forEach(cntr => {
+        aq.queue.forEach(cntr => {
           if (cntr.vsdr == "E") {
             let val = cntr.vscd + "/" + cntr.vsvy + "-" + cntr.vsdr;
             let vs = newItem.voys.filter(item => {
@@ -672,13 +675,13 @@ export default {
         });
         //5.统计桥吊下船
         newItem.vessels = [];
-        item.queue.forEach(cntr => {
+        aq.queue.forEach(cntr => {
           if (newItem.vessels.indexOf(cntr.vscd) < 0) {
             newItem.vessels.push(cntr.vscd);
           }
         });
         //6.桥吊下队列属性
-        item.queue.forEach(cntr => {
+        aq.queue.forEach(cntr => {
           if (cntr.vsdr == "E") {
             newItem.isOnlyIm = false;
           }
@@ -719,7 +722,6 @@ export default {
                   me.activeQueues.push({ qdno: qd.qdno, queue: data[qd.qdno] });
                 }
               });
-              //me.mainfun();
               resolve(data);
             } else {
               reject(errMsg);

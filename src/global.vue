@@ -1,5 +1,5 @@
 <script>
-const srvurl = "http://localhost:8003";
+const srvurl = "http://169.169.40.138:8003";
 
 function isEmpty(obj) {
   if (typeof obj == "undefined" || obj == null || obj == "") {
