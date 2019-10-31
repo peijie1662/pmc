@@ -533,10 +533,11 @@ export default {
     //计算激活的装卸时间点，标记忽略，同时计算延时
     calculateTime() {
       let me = this;
+      let bgDt = new Date();
       let StopIteration = new Error("StopIteration");
       try {
         me.activeQueues.forEach(aq => {
-          let preTime = new Date(); //上一个箱的时间点
+          let preTime = new Date(bgDt); //上一个箱的时间点
           aq.queue.forEach(cntr => {
             cntr.isConflict = false;
             cntr.isVesselLast = false;
@@ -589,9 +590,11 @@ export default {
     //激活队列计算冲突，转为可绘制队列
     convertDrawQueues() {
       let me = this;
-      let calTime = new Date();
+      let curTime = new Date();
+      let curInt = curTime.getTime();
+      //
+      let calTime = new Date(curTime);
       for (let i = 0; i <= L.C.time_length; i++) {
-        calTime.setMinutes(calTime.getMinutes() + 1);
         let calInt = calTime.getTime();
         //2.1找到潜在冲突集
         let calCntrs = [];
@@ -623,13 +626,13 @@ export default {
             cntr.conflict = conflict;
           }
         });
+        calTime.setMinutes(calTime.getMinutes() + 1);
       }
-      let curTime = new Date();
-      let curInt = curTime.getTime();
+      //
       me.drawQueues = [];
       me.activeQueues.forEach(aq => {
         //1.初始化桥吊下所有刻度
-        let scaleTime = new Date();
+        let scaleTime = new Date(curTime);
         let newItem = {
           qdno: aq.qdno,
           isOnlyIm: true, //只有进口
@@ -638,14 +641,14 @@ export default {
         };
         let maxScale = L.C.time_length / L.C.scale_min;
         for (let i = 0; i <= maxScale; i++) {
-          scaleTime = new Date(
-            scaleTime.setMinutes(scaleTime.getMinutes() + L.C.scale_min)
-          );
           newItem.scales.push({
             scaleNode: i,
             scaleTime: scaleTime,
             cntrs: []
           });
+          scaleTime = new Date(
+            scaleTime.setMinutes(scaleTime.getMinutes() + L.C.scale_min)
+          );
         }
         //3.归并到刻度，并检查是否忽略
         aq.queue.forEach(cntr => {

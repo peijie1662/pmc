@@ -52,10 +52,10 @@ const C = {
   qd_begin_x: 100,
   qd_begin_y: 50,
   qd_width: 100,
-  qd_height: 45,
+  qd_height: 40,
   qd_interval: 20,
   qd_queue_dx: 20,
-  qd_queue_dy: 2,
+  qd_queue_dy: 3,
   //
   cntr_interval: 15,
   //
@@ -166,7 +166,13 @@ function cntrInfo(stage, layer, x, y, cntr, visible) {
       new Konva.Text({
         x: left + 5,
         y: top + 45,
-        text: "箱号 --- " + cntr.cntrId + "   状态 --- " + cntr.jbst,
+        text:
+          "箱号: " +
+          cntr.cntrId +
+          "   状态:" +
+          cntr.jbst +
+          "   双吊:" +
+          cntr.twin,
         fontSize: 12,
         fontFamily: "Calibri",
         fill: "#000"
@@ -258,7 +264,7 @@ function drawScale(stage, layer, qd, scaleItem, type, showDelayDialog) {
       let content_color = "#20a0ff";
       if (cntr.jbst == "PD") {
         content_color = "yellow";
-      } 
+      }
       if (cntr.isIgnore) {
         content_color = "#dee1e6";
       }
@@ -399,11 +405,9 @@ function drawTimeline(layer, drawQueues, conflict, timeline_length) {
     })
   );
   if (drawQueues) {
-    //let maxScale = C.time_length / C.scale_min;
     let maxScale = (timeline_length * 60) / C.scale_min;
     for (let i = 0; i <= maxScale; i++) {
       let conflictNum = 0;
-      let conflictTime = null;
       let nodeTime = drawQueues[0].scales[i].scaleTime;
       drawQueues.forEach(dq => {
         dq.scales[i].cntrs.forEach(c => {
@@ -425,7 +429,7 @@ function drawTimeline(layer, drawQueues, conflict, timeline_length) {
         gp.add(
           new Konva.Rect({
             x: 20,
-            y: ry,
+            y: ry - 2 * C.scale_px,
             width: C.timeline_width,
             height: C.scale_px,
             fill: warn_color,
@@ -435,7 +439,12 @@ function drawTimeline(layer, drawQueues, conflict, timeline_length) {
         )
           .add(
             new Konva.Line({
-              points: [20 + C.timeline_width, ry, C.stage_width, ry],
+              points: [
+                20 + C.timeline_width,
+                ry - C.scale_px,
+                C.stage_width,
+                ry - C.scale_px
+              ],
               stroke: warn_color,
               strokeWidth: 1,
               lineCap: "round",
@@ -446,8 +455,7 @@ function drawTimeline(layer, drawQueues, conflict, timeline_length) {
           .add(
             new Konva.Text({
               x: 20 + C.timeline_width + 2,
-              y: ry + 1,
-              //text: GB.formatDate(conflictTime, "hh:mm"),
+              y: ry - 10,
               text: GB.formatDate(nodeTime, "hh:mm"),
               fontSize: 10,
               fontFamily: "Calibri",
@@ -458,7 +466,12 @@ function drawTimeline(layer, drawQueues, conflict, timeline_length) {
         //无冲突
         gp.add(
           new Konva.Line({
-            points: [20 + C.timeline_width, ry, C.stage_width, ry],
+            points: [
+              20 + C.timeline_width,
+              ry - C.scale_px,
+              C.stage_width,
+              ry - C.scale_px
+            ],
             stroke: "#20a0ff",
             strokeWidth: 1,
             lineCap: "round",
@@ -468,7 +481,7 @@ function drawTimeline(layer, drawQueues, conflict, timeline_length) {
         ).add(
           new Konva.Text({
             x: 20 + C.timeline_width + 2,
-            y: ry + 1,
+            y: ry - 10,
             text: GB.formatDate(nodeTime, "hh:mm"),
             fontSize: 10,
             fontFamily: "Calibri",
