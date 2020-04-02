@@ -5,6 +5,7 @@ import PzInfo from './views/mini_vessel_map/pzInfo.vue'
 import VplanInfo from './views/vessel_plan/vplan.vue'
 import ZyqkInfo from './views/real_time_monitoring/zyqk.vue'
 import Lyw from './views/load_yard_warn/loadYardWarn.vue'
+import MainScreen from './views/data_visualization/mainScreen.vue' 
 
 let routes = [{ 
     path: '/login',
@@ -69,6 +70,18 @@ let routes = [{
     children: [
         {
             path: '/lyw', component: Lyw, name: '装船场地拥堵预警'
+        }
+    ]
+},
+{
+    path: '/',
+    component: Home,
+    name: '',
+    iconCls: 'el-icon-view',
+    leaf: true,
+    children: [
+        {
+            path: '/ms', component: MainScreen, name: '看星星'
         }
     ]
 },

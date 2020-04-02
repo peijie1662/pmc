@@ -1,4 +1,5 @@
 <script>
+//const srvurl = "http://169.169.40.138:8003";
 const srvurl = "http://localhost:8003";
 
 function isEmpty(obj) {
@@ -198,6 +199,35 @@ function compareDown(prop) {
   };
 }
 
+function randomColor() {
+  var i = 0;
+  var str = "#";
+  var random = 0;
+  var aryNum = [
+    "0",
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F"
+  ];
+  for (i = 0; i < 6; i++) {
+    random = parseInt(Math.random() * 16);
+    str += aryNum[random];
+  }
+  return str;
+}
+
 export default {
   srvurl,
   //字符串函数
@@ -222,6 +252,7 @@ export default {
   downloadURI,
   groupBy,
   compareUp,
-  compareDown
+  compareDown,
+  randomColor
 };
 </script>
